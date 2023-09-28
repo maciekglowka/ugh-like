@@ -20,7 +20,7 @@ pub struct Gate {
     pub since_pickup: f32
 }
 impl Gate {
-    pub fn pickup(&mut self) {
+    pub fn clear_passenger(&mut self) {
         self.since_pickup = 0.;
         self.has_passenger = false;
     }

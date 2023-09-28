@@ -6,6 +6,8 @@ pub const BOARD_WIDTH: u32 = 20;
 pub const TOLERANCE: f32 = 0.01;
 pub const PASSENGER_LOAD_DIST: f32 = 3.;
 pub const PASSENGER_WALK_SPEED: f32 = 2.;
+pub const PASSENGER_FALL_SPEED: f32 = 5.;
+pub const PASSENGER_KNOCK_DOWN_SPEED: f32 = 1.;
 
 pub const FLY_ACC: f32 = 6.;
 pub const FLY_MAX_SPEED: f32 = 4.;

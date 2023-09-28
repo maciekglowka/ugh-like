@@ -9,7 +9,7 @@ use super::State;
 use crate::board::Gate;
 use crate::globals::{
     PASSENGER_LOAD_DIST, PASSENGER_WALK_SPEED, TOLERANCE, TILE_SIZE, SPAWN_TICK,
-    PASSENGER_WIDTH, PASSENGER_HEIGHT
+    PASSENGER_WIDTH, PASSENGER_HEIGHT, PASSENGER_FALL_SPEED, PASSENGER_KNOCK_DOWN_SPEED
 };
 use crate::player::Player;
 use crate::sprite::DynamicSprite;
@@ -18,7 +18,8 @@ use crate::utils::almost_eq;
 #[derive(PartialEq)]
 pub enum PassengerState {
     Waiting(f32),
-    Landed(Vector2f)
+    Landed(Vector2f),
+    Falling
 }
 
 pub struct Passenger {
@@ -98,11 +99,19 @@ pub fn should_remove(passenger: &Passenger) -> bool {
         PassengerState::Waiting(_) => false,
         PassengerState::Landed(gate) => {
             almost_eq(gate_centre(gate).x, passenger.sprite.centre().x)
+        },
+        PassengerState::Falling => {
+            passenger.sprite.position.y < -2.
         }
     }
 }
 
 pub fn move_passenger(passenger: &mut Passenger, player: &Player, delta: f32) {
+    if passenger.state == PassengerState::Falling {
+        passenger.sprite.position.y -= delta * PASSENGER_FALL_SPEED;
+        return
+    }
+
     let Some(d) = get_walk(passenger, player) else { return };
     let vx = delta * PASSENGER_WALK_SPEED * d.normalized().x;
     passenger.sprite.position.x += vx.clamp(-d.x.abs(), d.x.abs());
@@ -117,7 +126,8 @@ fn get_walk(passenger: &Passenger, player: &Player) -> Option<Vector2f> {
         },
         PassengerState::Landed(gate) => {
             return Some(gate_centre(gate) - passenger.sprite.centre())
-        }
+        },
+        PassengerState::Falling => ()
     }
     None
 }
@@ -151,8 +161,21 @@ pub fn try_load(state: &mut State) {
     }
     if let Some(loaded) = loaded {
         let passenger = state.passengers.remove(loaded);
-        state.board.gates[passenger.source_gate as usize].pickup();
+        state.board.gates[passenger.source_gate as usize].clear_passenger();
         state.player.passenger = Some(passenger);
+    }
+}
+
+pub fn try_knock_down(state: &mut State) {
+    if state.player.v.len() < PASSENGER_KNOCK_DOWN_SPEED { return }
+    let player_aabb = state.player.sprite.aabb();
+
+    for passenger in state.passengers.iter_mut() {
+        if !passenger.sprite.aabb().intersects(&player_aabb) { continue; }
+        if let PassengerState::Waiting(_) = passenger.state {
+            state.board.gates[passenger.source_gate as usize].clear_passenger();
+        }
+        passenger.state = PassengerState::Falling;
     }
 }
 

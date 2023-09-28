@@ -66,6 +66,7 @@ impl Game<WgpuContext> for State {
             passenger::try_spawn(self);
         }
 
+        passenger::try_knock_down(self);
         passenger::try_load(self);
         passenger::try_unload(self);
         self.passengers.retain(|p| !passenger::should_remove(p));
