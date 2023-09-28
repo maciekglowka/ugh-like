@@ -54,12 +54,25 @@ impl Passenger {
 
 pub fn try_spawn(state: &mut State) {
     state.since_spawn += SPAWN_TICK;
+    for gate in state.board.gates.iter_mut() {
+        gate.since_pickup += SPAWN_TICK;
+    }
 
-    if state.since_spawn < 5. { return }
-    let gate_idx = state.spawn_queue.pop_front().unwrap();
+    if state.since_spawn < state.spawn_interval { return }
+
+    let source_candidates = state.board.gates.iter()
+        .enumerate()
+        .filter(|(_, a)| !a.has_passenger && a.since_pickup > state.spawn_interval)
+        .map(|(i, _)| i);
+
     let mut rng = thread_rng();
-    let target_gate = *(state.spawn_queue.iter().choose(&mut rng).unwrap());
-    state.spawn_queue.push_back(gate_idx);
+    let Some(gate_idx) = source_candidates.choose(&mut rng) else { return };
+    let target_candidates = state.board.gates.iter()
+        .enumerate()
+        .filter(|(i, _)| *i != gate_idx)
+        .map(|(i, _)| i);
+
+    let Some(target_gate) = target_candidates.choose(&mut rng) else { return };
     
     if state.board.gates[gate_idx].has_passenger { return };
 
@@ -136,7 +149,7 @@ pub fn try_load(state: &mut State) {
     }
     if let Some(loaded) = loaded {
         let passenger = state.passengers.remove(loaded);
-        state.board.gates[passenger.source_gate as usize].has_passenger = false;
+        state.board.gates[passenger.source_gate as usize].pickup();
         state.player.passenger = Some(passenger);
     }
 }

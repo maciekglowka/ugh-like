@@ -16,7 +16,14 @@ pub struct Board {
 
 pub struct Gate {
     pub position: Vector2f,
-    pub has_passenger: bool
+    pub has_passenger: bool,
+    pub since_pickup: f32
+}
+impl Gate {
+    pub fn pickup(&mut self) {
+        self.since_pickup = 0.;
+        self.has_passenger = false;
+    }
 }
 
 pub fn generate_board() -> Board 
@@ -43,6 +50,7 @@ pub fn generate_board() -> Board
 
     let gate_pos = vec![
         Vector2f::new(TILE_SIZE * 2., TILE_SIZE * 3.),
+        Vector2f::new(TILE_SIZE * -3., TILE_SIZE * 6.),
         Vector2f::new(-TILE_SIZE * 4., 0.)
     ];
     let mut gates = Vec::new();
@@ -76,6 +84,6 @@ fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
         position
     };
-    let gate = Gate { position, has_passenger: false };
+    let gate = Gate { position, has_passenger: false, since_pickup: 0. };
     (sprite, gate)
 }

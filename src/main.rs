@@ -22,9 +22,9 @@ pub struct State {
     font: ResourceId,
     player: player::Player,
     passengers: Vec<passenger::Passenger>,
-    spawn_queue: VecDeque<usize>,
     since_spawn: f32,
-    spawn_timer: ResourceId
+    spawn_timer: ResourceId,
+    spawn_interval: f32
 }
 impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context<WgpuContext>) {
@@ -37,7 +37,7 @@ impl Game<WgpuContext> for State {
             Color(255, 255, 255, 255),
             Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
         );
-        self.spawn_queue = (0..self.board.gates.len()).collect();
+        self.spawn_interval = 8.;
     }
     fn update(&mut self, context: &mut Context<WgpuContext>) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
