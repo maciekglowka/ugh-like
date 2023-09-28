@@ -2,7 +2,7 @@ use rogalik_engine::{Context, GraphicsContext, ResourceId, Params2d, Color};
 use rogalik_math::vectors::Vector2f;
 use super::{State, WgpuContext};
 
-use crate::actor::Actor;
+use crate::player::Player;
 use crate::globals::TILE_SIZE;
 
 pub fn render_sprites(state: &State, context: &mut Context<WgpuContext>) {
@@ -15,15 +15,15 @@ pub fn render_sprites(state: &State, context: &mut Context<WgpuContext>) {
             Params2d { color: Color(32, 96, 32, 255), ..Default::default() }
         );
     }
-    render_actor(&state.player, state, context);
+    render_player(&state.player, state, context);
 }
 
-fn render_actor(actor: &Actor, state: &State, context: &mut Context<WgpuContext>) {
+fn render_player(player: &Player, state: &State, context: &mut Context<WgpuContext>) {
     context.graphics.draw_atlas_sprite(
-        state.textures[actor.atlas],
-        actor.sprite_index + actor.frame,
-        actor.position,
+        state.textures[player.atlas],
+        player.sprite_index + player.frame,
+        player.position,
         Vector2f::new(TILE_SIZE, TILE_SIZE),
-        Params2d { color: actor.color, ..Default::default() }
+        Params2d { color: player.color, ..Default::default() }
     );
 }

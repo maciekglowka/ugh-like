@@ -6,9 +6,10 @@ use std::collections::HashMap;
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
 
-mod actor;
 mod board;
 mod globals;
+mod passenger;
+mod player;
 mod render;
 
 #[derive(Default)]
@@ -17,40 +18,37 @@ pub struct State {
     animation_timer: ResourceId,
     textures: HashMap<&'static str, ResourceId>,
     font: ResourceId,
-    player: actor::Actor
+    player: player::Player
 }
 impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context<WgpuContext>) {
         load_assets(self, context);
         self.rocks = board::generate_board();
-        self.player = actor::Actor::new(Vector2f::new(0., 2.), "actors", 0, Color(255, 255, 255, 255));
+        self.player = player::Player::new(Vector2f::new(0., 2.), "actors", 0, Color(255, 255, 255, 255));
     }
     fn update(&mut self, context: &mut Context<WgpuContext>) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
-            self.player.v.y = globals::LIFT_SPEED;
-        } else {
-            self.player.v.y = 0.;
+            self.player.a.y = globals::LIFT_ACC;
         }
 
-        self.player.v.x = 0.;
-        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::D) {
-            self.player.v.x = globals::FLY_SPEED;
-            // self.flip = false;
-        }
-        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::A) {
-            self.player.v.x = -globals::FLY_SPEED;
-            // self.flip = false;
+        if !self.player.grounded {
+            if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::D) {
+                self.player.a.x = globals::FLY_ACC;
+            }
+            if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::A) {
+                self.player.a.x = -globals::FLY_ACC;
+            }
         }
 
         if context.time.get_timer(self.animation_timer).unwrap().is_finished() {
-            if self.player.v.y > 0. {
+            if self.player.a.y > 0. {
                 self.player.frame += 1;
                 self.player.frame = self.player.frame % globals::ACTOR_FRAMES;
             }
         }
 
         let obstacles = self.rocks.iter().map(|a| a.aabb).collect();
-        actor::move_actor(&mut self.player, &obstacles, context.time.get_delta());
+        player::move_player(&mut self.player, &obstacles, context.time.get_delta());
         render::render_sprites(self, context);
     }
 }
