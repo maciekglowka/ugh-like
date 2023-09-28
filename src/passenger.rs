@@ -15,6 +15,7 @@ use crate::player::Player;
 use crate::sprite::DynamicSprite;
 use crate::utils::almost_eq;
 
+#[derive(PartialEq)]
 pub enum PassengerState {
     Waiting(f32),
     Landed(Vector2f)
@@ -135,6 +136,7 @@ fn should_approach_loading(passenger: &Passenger, player: &Player) -> bool {
 }
 
 pub fn try_load(state: &mut State) {
+    if !state.player.grounded { return }
     if state.player.passenger.is_some() { return }
 
     let mut loaded = None;
@@ -160,6 +162,7 @@ pub fn try_unload(state: &mut State) {
     } else {
         return;
     };
+    if !state.player.grounded { return }
     if state.player.v.len() > TOLERANCE { return }
     let gate_position = if let Some(gate) =  state.board.gates.get(gate_no as usize) {
         gate.position

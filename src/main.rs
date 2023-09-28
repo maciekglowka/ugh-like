@@ -1,4 +1,4 @@
-use rogalik_engine::{Context, GraphicsContext, Engine, Game, ResourceId, Params2d, Color};
+use rogalik_engine::{Context, GraphicsContext, Engine, Game, ResourceId, Color};
 use rogalik_math::vectors::Vector2f;
 use rogalik_wgpu::WgpuContext;
 use std::collections::{HashMap, VecDeque};
@@ -6,12 +6,15 @@ use std::collections::{HashMap, VecDeque};
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
 
+type Context_ = Context<WgpuContext>;
+
 mod board;
 mod globals;
 mod passenger;
 mod player;
 mod render;
 mod sprite;
+mod ui;
 mod utils;
 
 #[derive(Default)]
@@ -27,7 +30,7 @@ pub struct State {
     spawn_interval: f32
 }
 impl Game<WgpuContext> for State {
-    fn setup(&mut self, context: &mut Context<WgpuContext>) {
+    fn setup(&mut self, context: &mut Context_) {
         load_assets(self, context);
         self.board = board::generate_board();
         self.player = player::Player::new(
@@ -39,7 +42,7 @@ impl Game<WgpuContext> for State {
         );
         self.spawn_interval = 8.;
     }
-    fn update(&mut self, context: &mut Context<WgpuContext>) {
+    fn update(&mut self, context: &mut Context_) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
             self.player.a.y = globals::LIFT_ACC;
         }
@@ -73,6 +76,7 @@ impl Game<WgpuContext> for State {
             passenger::move_passenger(passenger, &self.player, context.time.get_delta());
         }
         render::render_sprites(self, context);
+        ui::render_ui(self, context);
     }
 }
 
@@ -88,7 +92,7 @@ fn run() {
     engine.run();
 }
 
-fn load_assets(state: &mut State, context: &mut Context<WgpuContext>) {
+fn load_assets(state: &mut State, context: &mut Context_) {
     let sprite_bytes_ascii = include_bytes!("../assets/ascii.png");
     let sprite_bytes_actors = include_bytes!("../assets/actors.png");
     let sprite_bytes_kenney = include_bytes!("../assets/kenney.png");
