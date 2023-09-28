@@ -20,10 +20,10 @@ pub fn render_sprites(state: &State, context: &mut Context<WgpuContext>) {
 
 fn render_player(player: &Player, state: &State, context: &mut Context<WgpuContext>) {
     context.graphics.draw_atlas_sprite(
-        state.textures[player.atlas],
-        player.sprite_index + player.frame,
-        player.position,
+        state.textures[player.sprite.atlas],
+        player.sprite.index + player.sprite.frame,
+        player.sprite.position,
         Vector2f::new(TILE_SIZE, TILE_SIZE),
-        Params2d { color: player.color, ..Default::default() }
+        Params2d { color: player.sprite.color, ..Default::default() }
     );
 }

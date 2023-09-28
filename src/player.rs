@@ -2,18 +2,14 @@ use rogalik_math::{
     aabb::Aabb,
     vectors::Vector2f
 };
-use rogalik_engine::{Color, ResourceId};
+use rogalik_engine::Color;
 
-use crate::globals::{GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG, TILE_SIZE};
+use crate::globals::{GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG};
+use crate::sprite::DynamicSprite;
 
 #[derive(Default)]
 pub struct Player {
-    pub atlas: &'static str,
-    pub sprite_index: usize,
-    pub color: Color,
-    pub frame: usize,
-    pub position: Vector2f,
-    pub size: Vector2f,
+    pub sprite: DynamicSprite,
     pub v: Vector2f,
     pub a: Vector2f,
     pub grounded: bool
@@ -23,22 +19,22 @@ impl Player {
         position: Vector2f,
         atlas: &'static str,
         sprite_index: usize,
-        color: Color
+        color: Color,
+        collider_size: Vector2f
     ) -> Self {
-        Self {
+        let sprite = DynamicSprite::new(
+            position,
             atlas,
             sprite_index,
-            position,
             color,
-            frame: 0,
+            collider_size
+        );
+        Self {
+            sprite,
             v: Vector2f::ZERO,
             a: Vector2f::ZERO,
-            size: Vector2f::new(TILE_SIZE, TILE_SIZE),
             grounded: false
         }
-    }
-    pub fn aabb(&self) -> Aabb {
-        Aabb::new(self.position, self.position + self.size)
     }
 }
 
@@ -54,10 +50,11 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.a.y = -GRAVITY_ACC;
 
     let dy = delta * player.v.y;
-    let target = player.position + Vector2f::new(0., dy);
-    let colliders = collision(Aabb::new(target, target + player.size), obstacles);
+    let colliders = collision(
+        player.sprite.aabb_moved(Vector2f::new(0., dy)), obstacles
+    );
     if colliders.len() == 0 {
-        player.position.y += dy;
+        player.sprite.position.y += dy;
         return;
     }
 
@@ -68,9 +65,9 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     } else {
         colliders.iter()
             .map(|a| a.a.y).fold(f32::INFINITY, |a, b| a.min(b))
-        -player.size.y    
+        -player.sprite.collider_size.y    
     };
-    player.position.y = y;
+    player.sprite.position.y = y;
     player.v.y = 0.;
 }
 fn move_x(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
@@ -83,10 +80,12 @@ fn move_x(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.v.x = player.v.x.clamp(-FLY_MAX_SPEED, FLY_MAX_SPEED);
     let dx = delta * player.v.x;
 
-    let target = player.position + Vector2f::new(dx, 0.);
-    let colliders = collision(Aabb::new(target, target + player.size), obstacles);
+    // let target = player.sprite.position + Vector2f::new(dx, 0.);
+    let colliders = collision(
+        player.sprite.aabb_moved(Vector2f::new(dx, 0.)), obstacles
+    );
     if colliders.len() == 0 {
-        player.position.x += dx;
+        player.sprite.position.x += dx;
         return;
     }
 
@@ -96,9 +95,9 @@ fn move_x(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     } else {
         colliders.iter()
             .map(|a| a.a.x).fold(f32::INFINITY, |a, b| a.min(b))
-        -player.size.x
+        -player.sprite.collider_size.x
     };
-    player.position.x = x;
+    player.sprite.position.x = x;
 }
 
 fn collision(aabb: Aabb, obstacles: &Vec<Aabb>) -> Vec<Aabb> {

@@ -11,6 +11,7 @@ mod globals;
 mod passenger;
 mod player;
 mod render;
+mod sprite;
 
 #[derive(Default)]
 pub struct State {
@@ -24,7 +25,13 @@ impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context<WgpuContext>) {
         load_assets(self, context);
         self.rocks = board::generate_board();
-        self.player = player::Player::new(Vector2f::new(0., 2.), "actors", 0, Color(255, 255, 255, 255));
+        self.player = player::Player::new(
+            Vector2f::new(0., 2.),
+            "actors",
+            0,
+            Color(255, 255, 255, 255),
+            Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
+        );
     }
     fn update(&mut self, context: &mut Context<WgpuContext>) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
@@ -42,8 +49,8 @@ impl Game<WgpuContext> for State {
 
         if context.time.get_timer(self.animation_timer).unwrap().is_finished() {
             if self.player.a.y > 0. {
-                self.player.frame += 1;
-                self.player.frame = self.player.frame % globals::ACTOR_FRAMES;
+                self.player.sprite.frame += 1;
+                self.player.sprite.frame = self.player.sprite.frame % globals::ACTOR_FRAMES;
             }
         }
 
