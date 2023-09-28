@@ -15,3 +15,4 @@ pub const LIFT_MAX_SPEED: f32 = 4.;
 pub const GRAVITY_ACC: f32 = 5.;
 pub const ACTOR_FRAMES: usize = 4;
 pub const ANIMATION_TICK: f32 = 0.1;
+pub const SPAWN_TICK: f32 = 1.;

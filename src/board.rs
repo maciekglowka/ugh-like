@@ -11,7 +11,12 @@ use crate::sprite::StaticSprite;
 pub struct Board {
     pub colliders: Vec<Aabb>,
     pub sprites: Vec<StaticSprite>,
-    pub gates: Vec<Vector2f>
+    pub gates: Vec<Gate>
+}
+
+pub struct Gate {
+    pub position: Vector2f,
+    pub has_passenger: bool
 }
 
 pub fn generate_board() -> Board 
@@ -42,9 +47,9 @@ pub fn generate_board() -> Board
     ];
     let mut gates = Vec::new();
     for (i, g) in gate_pos.iter().enumerate() {
-        let sprite = get_gate(*g, i as u32);
+        let (sprite, gate) = get_gate(*g, i as u32);
         sprites.push(sprite);
-        gates.push(*g);
+        gates.push(gate);
     }
 
     Board { sprites, colliders, gates }
@@ -63,12 +68,14 @@ fn get_rock(position: Vector2f) -> (StaticSprite, Aabb) {
     (sprite, aabb)
 }
 
-fn get_gate(position: Vector2f, number: u32) -> StaticSprite {
-    StaticSprite {
+fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
+    let sprite = StaticSprite {
         atlas: "ascii",
         index: 177,
         color: Color(96, 32, 96, 255),
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
         position
-    }
+    };
+    let gate = Gate { position, has_passenger: false };
+    (sprite, gate)
 }

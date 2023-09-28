@@ -1,7 +1,7 @@
 use rogalik_engine::{Context, GraphicsContext, Engine, Game, ResourceId, Params2d, Color};
 use rogalik_math::vectors::Vector2f;
 use rogalik_wgpu::WgpuContext;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
@@ -21,7 +21,10 @@ pub struct State {
     textures: HashMap<&'static str, ResourceId>,
     font: ResourceId,
     player: player::Player,
-    passengers: Vec<passenger::Passenger>
+    passengers: Vec<passenger::Passenger>,
+    spawn_queue: VecDeque<usize>,
+    since_spawn: f32,
+    spawn_timer: ResourceId
 }
 impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context<WgpuContext>) {
@@ -34,18 +37,7 @@ impl Game<WgpuContext> for State {
             Color(255, 255, 255, 255),
             Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
         );
-        let passenger = passenger::Passenger::new(
-            Vector2f::new(-2., 0.),
-            "actors",
-            4,
-            Color(255, 255, 255, 255),
-            Vector2f::new(
-                globals::PASSENGER_WIDTH,
-                globals::PASSENGER_HEIGHT
-            ),
-            0
-        );
-        self.passengers.push(passenger);
+        self.spawn_queue = (0..self.board.gates.len()).collect();
     }
     fn update(&mut self, context: &mut Context<WgpuContext>) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
@@ -66,6 +58,9 @@ impl Game<WgpuContext> for State {
                 self.player.sprite.frame += 1;
                 self.player.sprite.frame = self.player.sprite.frame % globals::ACTOR_FRAMES;
             }
+        }
+        if context.time.get_timer(self.spawn_timer).unwrap().is_finished() {
+            passenger::try_spawn(self);
         }
 
         passenger::try_load(self);
@@ -126,5 +121,6 @@ fn load_assets(state: &mut State, context: &mut Context<WgpuContext>) {
     context.graphics.set_camera(camera_0);
 
     state.animation_timer = context.time.add_timer(globals::ANIMATION_TICK);
+    state.spawn_timer = context.time.add_timer(globals::SPAWN_TICK);
     context.graphics.set_clear_color(Color(0, 6, 12, 255));
 }

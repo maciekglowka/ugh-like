@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rand = "0.8"
 rogalik_engine = { path = "../rogalik/crates/rogalik_engine" }
 rogalik_math = { path = "../rogalik/crates/rogalik_math" }
 rogalik_wgpu = { path = "../rogalik/crates/rogalik_wgpu" }

@@ -1,3 +1,4 @@
+use rand::prelude::*;
 use rogalik_engine::Color;
 use rogalik_math::{
     aabb::Aabb,
@@ -5,7 +6,11 @@ use rogalik_math::{
 };
 
 use super::State;
-use crate::globals::{PASSENGER_LOAD_DIST, PASSENGER_WALK_SPEED, TOLERANCE, TILE_SIZE};
+use crate::board::Gate;
+use crate::globals::{
+    PASSENGER_LOAD_DIST, PASSENGER_WALK_SPEED, TOLERANCE, TILE_SIZE, SPAWN_TICK,
+    PASSENGER_WIDTH, PASSENGER_HEIGHT
+};
 use crate::player::Player;
 use crate::sprite::DynamicSprite;
 use crate::utils::almost_eq;
@@ -18,6 +23,7 @@ pub enum PassengerState {
 pub struct Passenger {
     pub sprite: DynamicSprite,
     pub state: PassengerState,
+    pub source_gate: u32,
     pub target_gate: u32
 }
 impl Passenger {
@@ -27,6 +33,7 @@ impl Passenger {
         sprite_index: usize,
         color: Color,
         collider_size: Vector2f,
+        source_gate: u32,
         target_gate: u32
     ) -> Self {
         let sprite = DynamicSprite::new(
@@ -39,9 +46,37 @@ impl Passenger {
         Self {
             sprite,
             state: PassengerState::Waiting(0.),
-            target_gate
+            target_gate,
+            source_gate
         }
     }
+}
+
+pub fn try_spawn(state: &mut State) {
+    state.since_spawn += SPAWN_TICK;
+
+    if state.since_spawn < 5. { return }
+    let gate_idx = state.spawn_queue.pop_front().unwrap();
+    let mut rng = thread_rng();
+    let target_gate = *(state.spawn_queue.iter().choose(&mut rng).unwrap());
+    state.spawn_queue.push_back(gate_idx);
+    
+    if state.board.gates[gate_idx].has_passenger { return };
+
+    let gate_position = state.board.gates[gate_idx].position;
+
+    let passenger = Passenger::new(
+        gate_position + Vector2f::new(0.5 * TILE_SIZE, 0.),
+        "actors",
+        4,
+        Color(255, 255, 255, 255),
+        Vector2f::new(PASSENGER_WIDTH, PASSENGER_HEIGHT),
+        gate_idx as u32,
+        target_gate as u32
+    );
+    state.passengers.push(passenger);
+    state.since_spawn = 0.;
+    state.board.gates[gate_idx].has_passenger = true;
 }
 
 pub fn should_remove(passenger: &Passenger) -> bool {
@@ -101,6 +136,7 @@ pub fn try_load(state: &mut State) {
     }
     if let Some(loaded) = loaded {
         let passenger = state.passengers.remove(loaded);
+        state.board.gates[passenger.source_gate as usize].has_passenger = false;
         state.player.passenger = Some(passenger);
     }
 }
@@ -112,13 +148,17 @@ pub fn try_unload(state: &mut State) {
         return;
     };
     if state.player.v.len() > TOLERANCE { return }
-    let Some(&gate) = state.board.gates.get(gate_no as usize) else { return };
-    if (state.player.sprite.centre() - gate_centre(gate)).len() > PASSENGER_LOAD_DIST {
+    let gate_position = if let Some(gate) =  state.board.gates.get(gate_no as usize) {
+        gate.position
+    } else { 
+        return
+    };
+    if (state.player.sprite.centre() - gate_centre(gate_position)).len() > PASSENGER_LOAD_DIST {
         return
     }
 
     let mut passenger = state.player.passenger.take().unwrap();
-    passenger.state = PassengerState::Landed(gate);
+    passenger.state = PassengerState::Landed(gate_position);
     passenger.sprite.position = state.player.sprite.position;
     state.passengers.push(passenger);
 }
