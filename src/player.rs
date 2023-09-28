@@ -5,6 +5,7 @@ use rogalik_math::{
 use rogalik_engine::Color;
 
 use crate::globals::{GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG};
+use crate::passenger::Passenger;
 use crate::sprite::DynamicSprite;
 
 #[derive(Default)]
@@ -12,7 +13,8 @@ pub struct Player {
     pub sprite: DynamicSprite,
     pub v: Vector2f,
     pub a: Vector2f,
-    pub grounded: bool
+    pub grounded: bool,
+    pub passenger: Option<Passenger>
 }
 impl Player {
     pub fn new(
@@ -33,7 +35,8 @@ impl Player {
             sprite,
             v: Vector2f::ZERO,
             a: Vector2f::ZERO,
-            grounded: false
+            grounded: false,
+            passenger: None
         }
     }
 }

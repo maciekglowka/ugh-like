@@ -1,29 +1,42 @@
-use rogalik_engine::{Context, GraphicsContext, ResourceId, Params2d, Color};
-use rogalik_math::vectors::Vector2f;
+use rogalik_engine::{Context, GraphicsContext, Params2d};
 use super::{State, WgpuContext};
 
-use crate::player::Player;
-use crate::globals::TILE_SIZE;
+use crate::sprite::{DynamicSprite, StaticSprite};
 
 pub fn render_sprites(state: &State, context: &mut Context<WgpuContext>) {
-    for rock in state.rocks.iter() {
-        context.graphics.draw_atlas_sprite(
-            state.textures["ascii"],
-            177,
-            rock.position,
-            Vector2f::new(TILE_SIZE, TILE_SIZE),
-            Params2d { color: Color(32, 96, 32, 255), ..Default::default() }
-        );
+    for sprite in state.board.sprites.iter() {
+        render_static_sprite(sprite, state, context);
     }
-    render_player(&state.player, state, context);
+    render_dynamic_sprite(&state.player.sprite, state, context);
+    for passenger in state.passengers.iter() {
+        render_dynamic_sprite(&passenger.sprite, state, context);
+    }
 }
 
-fn render_player(player: &Player, state: &State, context: &mut Context<WgpuContext>) {
+fn render_dynamic_sprite(
+    sprite: &DynamicSprite,
+    state: &State,
+    context: &mut Context<WgpuContext>
+) {
     context.graphics.draw_atlas_sprite(
-        state.textures[player.sprite.atlas],
-        player.sprite.index + player.sprite.frame,
-        player.sprite.position,
-        Vector2f::new(TILE_SIZE, TILE_SIZE),
-        Params2d { color: player.sprite.color, ..Default::default() }
+        state.textures[sprite.atlas],
+        sprite.index + sprite.frame,
+        sprite.position,
+        sprite.size,
+        Params2d { color: sprite.color, ..Default::default() }
+    );
+}
+
+fn render_static_sprite(
+    sprite: &StaticSprite,
+    state: &State,
+    context: &mut Context<WgpuContext>
+) {
+    context.graphics.draw_atlas_sprite(
+        state.textures[sprite.atlas],
+        sprite.index,
+        sprite.position,
+        sprite.size,
+        Params2d { color: sprite.color, ..Default::default() }
     );
 }

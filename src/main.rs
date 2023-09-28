@@ -12,19 +12,21 @@ mod passenger;
 mod player;
 mod render;
 mod sprite;
+mod utils;
 
 #[derive(Default)]
 pub struct State {
-    rocks: Vec<board::Rock>,
+    board: board::Board,
     animation_timer: ResourceId,
     textures: HashMap<&'static str, ResourceId>,
     font: ResourceId,
-    player: player::Player
+    player: player::Player,
+    passengers: Vec<passenger::Passenger>
 }
 impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context<WgpuContext>) {
         load_assets(self, context);
-        self.rocks = board::generate_board();
+        self.board = board::generate_board();
         self.player = player::Player::new(
             Vector2f::new(0., 2.),
             "actors",
@@ -32,6 +34,18 @@ impl Game<WgpuContext> for State {
             Color(255, 255, 255, 255),
             Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
         );
+        let passenger = passenger::Passenger::new(
+            Vector2f::new(-2., 0.),
+            "actors",
+            4,
+            Color(255, 255, 255, 255),
+            Vector2f::new(
+                globals::PASSENGER_WIDTH,
+                globals::PASSENGER_HEIGHT
+            ),
+            0
+        );
+        self.passengers.push(passenger);
     }
     fn update(&mut self, context: &mut Context<WgpuContext>) {
         if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
@@ -54,8 +68,15 @@ impl Game<WgpuContext> for State {
             }
         }
 
-        let obstacles = self.rocks.iter().map(|a| a.aabb).collect();
-        player::move_player(&mut self.player, &obstacles, context.time.get_delta());
+        passenger::try_load(self);
+        passenger::try_unload(self);
+        self.passengers.retain(|p| !passenger::should_remove(p));
+
+        let obstacles = &self.board.colliders;
+        player::move_player(&mut self.player, obstacles, context.time.get_delta());
+        for passenger in self.passengers.iter_mut() {
+            passenger::move_passenger(passenger, &self.player, context.time.get_delta());
+        }
         render::render_sprites(self, context);
     }
 }

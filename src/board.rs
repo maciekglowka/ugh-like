@@ -2,23 +2,23 @@ use rogalik_math::{
     aabb::Aabb,
     vectors::Vector2f
 };
+use rogalik_engine::Color;
 
 use crate::globals::{TILE_SIZE, BOARD_WIDTH};
+use crate::sprite::StaticSprite;
 
-pub struct Rock {
-    pub position: Vector2f,
-    pub aabb: Aabb
-}
-impl Rock {
-    pub fn new(position: Vector2f) -> Self {
-        Self {
-            position,
-            aabb: Aabb::new(position, position + Vector2f::new(TILE_SIZE, TILE_SIZE))
-        }
-    }
+#[derive(Default)]
+pub struct Board {
+    pub colliders: Vec<Aabb>,
+    pub sprites: Vec<StaticSprite>,
+    pub gates: Vec<Vector2f>
 }
 
-pub fn generate_board() -> Vec<Rock> {
+pub fn generate_board() -> Board 
+{
+    let mut sprites = Vec::new();
+    let mut colliders = Vec::new();
+
     let mut rocks = Vec::new();
 
     for x in 0..BOARD_WIDTH {
@@ -29,5 +29,46 @@ pub fn generate_board() -> Vec<Rock> {
     rocks.push(Vector2f::new(TILE_SIZE * 4., TILE_SIZE * 2.));
     rocks.push(Vector2f::new(TILE_SIZE * -4., TILE_SIZE * 5.));
     rocks.push(Vector2f::new(TILE_SIZE * -3., TILE_SIZE * 5.));
-    rocks.iter().map(|&v| Rock::new(v)).collect()
+    
+    for r in rocks {
+        let (sprite, aabb) = get_rock(r);
+        sprites.push(sprite);
+        colliders.push(aabb);
+    }
+
+    let gate_pos = vec![
+        Vector2f::new(TILE_SIZE * 2., TILE_SIZE * 3.),
+        Vector2f::new(-TILE_SIZE * 4., 0.)
+    ];
+    let mut gates = Vec::new();
+    for (i, g) in gate_pos.iter().enumerate() {
+        let sprite = get_gate(*g, i as u32);
+        sprites.push(sprite);
+        gates.push(*g);
+    }
+
+    Board { sprites, colliders, gates }
+}
+
+
+fn get_rock(position: Vector2f) -> (StaticSprite, Aabb) {
+    let sprite = StaticSprite {
+        atlas: "ascii",
+        index: 177,
+        color: Color(32, 96, 32, 255),
+        size: Vector2f::new(TILE_SIZE, TILE_SIZE),
+        position
+    };
+    let aabb = Aabb::new(position, position + Vector2f::new(TILE_SIZE, TILE_SIZE));
+    (sprite, aabb)
+}
+
+fn get_gate(position: Vector2f, number: u32) -> StaticSprite {
+    StaticSprite {
+        atlas: "ascii",
+        index: 177,
+        color: Color(96, 32, 96, 255),
+        size: Vector2f::new(TILE_SIZE, TILE_SIZE),
+        position
+    }
 }

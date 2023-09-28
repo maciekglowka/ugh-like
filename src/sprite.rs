@@ -14,7 +14,7 @@ pub struct DynamicSprite {
     pub frame: usize,
     pub position: Vector2f,
     pub collider_size: Vector2f,
-    pub sprite_size: Vector2f
+    pub size: Vector2f
 }
 impl DynamicSprite {
     pub fn new(
@@ -30,7 +30,7 @@ impl DynamicSprite {
             position,
             color,
             frame: 0,
-            sprite_size: Vector2f::new(TILE_SIZE, TILE_SIZE),
+            size: Vector2f::new(TILE_SIZE, TILE_SIZE),
             collider_size
         }
     }
@@ -41,4 +41,16 @@ impl DynamicSprite {
         let target = self.position + offset;
         Aabb::new(target, target + self.collider_size)
     }
+    pub fn centre(&self) -> Vector2f {
+        // returns collider's centre
+        self.position + 0.5 * self.collider_size
+    }
+}
+
+pub struct StaticSprite {
+    pub atlas: &'static str,
+    pub index: usize,
+    pub color: Color,
+    pub position: Vector2f,
+    pub size: Vector2f
 }
