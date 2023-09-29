@@ -22,11 +22,18 @@ pub enum PassengerState {
     Falling
 }
 
+pub enum PassengerAnimationState {
+    Idle,
+    Walking,
+    Falling
+}
+
 pub struct Passenger {
     pub sprite: DynamicSprite,
     pub state: PassengerState,
     pub source_gate: u32,
-    pub target_gate: u32
+    pub target_gate: u32,
+    pub animation_state: PassengerAnimationState
 }
 impl Passenger {
     pub fn new(
@@ -43,13 +50,15 @@ impl Passenger {
             atlas,
             sprite_index,
             color,
-            collider_size
+            collider_size,
+            Vector2f::new(0.25 * TILE_SIZE, 0.)
         );
         Self {
             sprite,
             state: PassengerState::Waiting(0.),
             target_gate,
-            source_gate
+            source_gate,
+            animation_state: PassengerAnimationState::Idle
         }
     }
 }
@@ -109,12 +118,18 @@ pub fn should_remove(passenger: &Passenger) -> bool {
 pub fn move_passenger(passenger: &mut Passenger, player: &Player, delta: f32) {
     if passenger.state == PassengerState::Falling {
         passenger.sprite.position.y -= delta * PASSENGER_FALL_SPEED;
+        passenger.animation_state = PassengerAnimationState::Falling;
         return
     }
+    passenger.animation_state = PassengerAnimationState::Idle;
 
     let Some(d) = get_walk(passenger, player) else { return };
     let vx = delta * PASSENGER_WALK_SPEED * d.normalized().x;
     passenger.sprite.position.x += vx.clamp(-d.x.abs(), d.x.abs());
+    if !almost_eq(d.len(), 0.) {
+        passenger.animation_state = PassengerAnimationState::Walking;
+        passenger.sprite.flip_x =  if d.x < 0. { true } else { false };
+    }
 }
 
 fn get_walk(passenger: &Passenger, player: &Player) -> Option<Vector2f> {
@@ -151,13 +166,15 @@ pub fn try_load(state: &mut State) {
 
     let mut loaded = None;
     for (i, passenger) in state.passengers.iter().enumerate() {
-        if !same_level(passenger, &state.player.sprite.position) { continue; }
-        if (passenger.sprite.centre() - state.player.sprite.centre()).len()
-            > 0.25 * passenger.sprite.collider_size.x {
-            continue;
+        if let PassengerState::Waiting(_) = passenger.state {
+            if !same_level(passenger, &state.player.sprite.position) { continue; }
+            if (passenger.sprite.centre() - state.player.sprite.centre()).len()
+                > 0.5 * passenger.sprite.collider_size.x {
+                continue;
+            }
+            loaded = Some(i);
+            break;
         }
-        loaded = Some(i);
-        break;
     }
     if let Some(loaded) = loaded {
         let passenger = state.passengers.remove(loaded);

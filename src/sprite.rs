@@ -14,7 +14,9 @@ pub struct DynamicSprite {
     pub frame: usize,
     pub position: Vector2f,
     pub collider_size: Vector2f,
-    pub size: Vector2f
+    pub collider_offset: Vector2f,
+    pub size: Vector2f,
+    pub flip_x: bool
 }
 impl DynamicSprite {
     pub fn new(
@@ -22,7 +24,8 @@ impl DynamicSprite {
         atlas: &'static str,
         index: usize,
         color: Color,
-        collider_size: Vector2f
+        collider_size: Vector2f,
+        collider_offset: Vector2f,
     ) -> Self {
         Self {
             atlas,
@@ -31,19 +34,22 @@ impl DynamicSprite {
             color,
             frame: 0,
             size: Vector2f::new(TILE_SIZE, TILE_SIZE),
-            collider_size
+            collider_size,
+            collider_offset,
+            flip_x: false
         }
     }
     pub fn aabb(&self) -> Aabb {
-        Aabb::new(self.position, self.position + self.collider_size)
+        let pos = self.position + self.collider_offset;
+        Aabb::new(pos, pos + self.collider_size)
     }
     pub fn aabb_moved(&self, offset: Vector2f) -> Aabb {
-        let target = self.position + offset;
+        let target = self.position + self.collider_offset + offset;
         Aabb::new(target, target + self.collider_size)
     }
     pub fn centre(&self) -> Vector2f {
         // returns collider's centre
-        self.position + 0.5 * self.collider_size
+        self.position + self.collider_offset + 0.5 * self.collider_size
     }
 }
 

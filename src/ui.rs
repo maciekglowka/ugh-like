@@ -21,7 +21,7 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
             219,
             passenger.sprite.centre() + Vector2f::new(- 0.4 * TILE_SIZE, 0.8 * TILE_SIZE),
             Vector2f::new(0.8 * TILE_SIZE, 0.5 * TILE_SIZE),
-            Params2d { color: Color(32, 32, 32, 255), ..Default::default() }
+            Params2d { color: Color(64, 85, 89, 255), ..Default::default() }
         );
         let t = to_roman(passenger.target_gate + 1);
         let dx = 0.5 * t.len() as f32 * 0.25 * TILE_SIZE;
@@ -30,7 +30,7 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
             t,
             passenger.sprite.centre() + Vector2f::new(-dx, 0.9 * TILE_SIZE),
             0.25 * TILE_SIZE,
-            Params2d::default()
+            Params2d { color: Color(0, 0, 0, 255), ..Default::default() }
         );
     }
 }

@@ -1,8 +1,9 @@
 use rogalik_math::{
     aabb::Aabb,
-    vectors::Vector2f
+    vectors::{Vector2f, Vector2i}
 };
 use rogalik_engine::Color;
+use std::collections::HashSet;
 
 use crate::globals::{TILE_SIZE, BOARD_WIDTH};
 use crate::sprite::StaticSprite;
@@ -31,19 +32,19 @@ pub fn generate_board() -> Board
     let mut sprites = Vec::new();
     let mut colliders = Vec::new();
 
-    let mut rocks = Vec::new();
+    let mut rocks = HashSet::new();
 
     for x in 0..BOARD_WIDTH {
-        rocks.push(Vector2f::new(TILE_SIZE * (x as f32 - BOARD_WIDTH as f32 / 2.), -TILE_SIZE));
+        rocks.insert(Vector2i::new(x as i32 - BOARD_WIDTH as i32 / 2, - 1));
     }
-    rocks.push(Vector2f::new(TILE_SIZE * 2., TILE_SIZE * 2.));
-    rocks.push(Vector2f::new(TILE_SIZE * 3., TILE_SIZE * 2.));
-    rocks.push(Vector2f::new(TILE_SIZE * 4., TILE_SIZE * 2.));
-    rocks.push(Vector2f::new(TILE_SIZE * -4., TILE_SIZE * 5.));
-    rocks.push(Vector2f::new(TILE_SIZE * -3., TILE_SIZE * 5.));
+    rocks.insert(Vector2i::new(2, 2));
+    rocks.insert(Vector2i::new(3, 2));
+    rocks.insert(Vector2i::new(4, 2));
+    rocks.insert(Vector2i::new(-4, 5));
+    rocks.insert(Vector2i::new(-3, 5));
     
-    for r in rocks {
-        let (sprite, aabb) = get_rock(r);
+    for r in rocks.iter() {
+        let (sprite, aabb) = get_rock(*r, &rocks);
         sprites.push(sprite);
         colliders.push(aabb);
     }
@@ -64,11 +65,15 @@ pub fn generate_board() -> Board
 }
 
 
-fn get_rock(position: Vector2f) -> (StaticSprite, Aabb) {
+fn get_rock(v: Vector2i, other: &HashSet<Vector2i>) -> (StaticSprite, Aabb) {
+    let position = v.as_f32() * TILE_SIZE;
+    let mut offset = 0;
+    if !other.contains(&(v + Vector2i::UP)) { offset += 1 };
+    if !other.contains(&(v + Vector2i::DOWN)) { offset += 2 };
     let sprite = StaticSprite {
-        atlas: "ascii",
-        index: 177,
-        color: Color(32, 96, 32, 255),
+        atlas: "tiles",
+        index: offset,
+        color: Color(255, 255, 255, 255),
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
         position
     };
@@ -78,9 +83,9 @@ fn get_rock(position: Vector2f) -> (StaticSprite, Aabb) {
 
 fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
     let sprite = StaticSprite {
-        atlas: "ascii",
-        index: 177,
-        color: Color(96, 32, 96, 255),
+        atlas: "tiles",
+        index: 4,
+        color: Color(255, 255, 255, 255),
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
         position
     };

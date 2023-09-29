@@ -1,7 +1,8 @@
 pub const TILE_SIZE: f32 = 1.;
 pub const PASSENGER_HEIGHT: f32 = 0.75;
 pub const PASSENGER_WIDTH: f32 = 0.5;
-pub const BOARD_WIDTH: u32 = 20;
+pub const BOARD_WIDTH: u32 = 16;
+pub const BOARD_HEIGHT: u32 = 10;
 
 pub const TOLERANCE: f32 = 0.01;
 pub const PASSENGER_LOAD_DIST: f32 = 3.;

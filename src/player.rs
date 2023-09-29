@@ -29,7 +29,8 @@ impl Player {
             atlas,
             sprite_index,
             color,
-            collider_size
+            collider_size,
+            Vector2f::ZERO
         );
         Self {
             sprite,
