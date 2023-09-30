@@ -9,7 +9,8 @@ use super::State;
 use crate::board::Gate;
 use crate::globals::{
     PASSENGER_LOAD_DIST, PASSENGER_WALK_SPEED, TOLERANCE, TILE_SIZE, SPAWN_TICK,
-    PASSENGER_WIDTH, PASSENGER_HEIGHT, PASSENGER_FALL_SPEED, PASSENGER_KNOCK_DOWN_SPEED
+    PASSENGER_WIDTH, PASSENGER_HEIGHT, PASSENGER_FALL_SPEED, PASSENGER_KNOCK_DOWN_SPEED,
+    PASSENGER_MAX_WAIT
 };
 use crate::player::Player;
 use crate::sprite::DynamicSprite;
@@ -19,7 +20,9 @@ use crate::utils::almost_eq;
 pub enum PassengerState {
     Waiting(f32),
     Landed(Vector2f),
-    Falling
+    Loaded,
+    Falling,
+    Resigned
 }
 
 pub enum PassengerAnimationState {
@@ -105,12 +108,25 @@ pub fn try_spawn(state: &mut State) {
 
 pub fn should_remove(passenger: &Passenger) -> bool {
     match passenger.state {
-        PassengerState::Waiting(_) => false,
+        PassengerState::Waiting(_) | PassengerState::Loaded => false,
         PassengerState::Landed(gate) => {
             almost_eq(gate_centre(gate).x, passenger.sprite.centre().x)
         },
         PassengerState::Falling => {
             passenger.sprite.position.y < -2.
+        }
+        PassengerState::Resigned => true,
+    }
+}
+
+pub fn handle_waiting(state: &mut State, delta: f32) {
+    for passenger in state.passengers.iter_mut() {
+        if let PassengerState::Waiting(ref mut time) = passenger.state {
+            *time += delta;
+            if *time >= PASSENGER_MAX_WAIT {
+                state.player.stats.take_reputation();
+                passenger.state = PassengerState::Resigned
+            }
         }
     }
 }
@@ -142,14 +158,14 @@ fn get_walk(passenger: &Passenger, player: &Player) -> Option<Vector2f> {
         PassengerState::Landed(gate) => {
             return Some(gate_centre(gate) - passenger.sprite.centre())
         },
-        PassengerState::Falling => ()
+        PassengerState::Falling | PassengerState::Resigned | PassengerState::Loaded => ()
     }
     None
 }
 
 fn should_approach_loading(passenger: &Passenger, player: &Player) -> bool {
     if player.passenger.is_some() { return false }
-    if !same_level(passenger, &player.sprite.position) { return false }
+    if !same_level(&passenger.sprite, &player.sprite.position) { return false }
 
     if (
         passenger.sprite.centre() - player.sprite.centre()
@@ -165,14 +181,15 @@ pub fn try_load(state: &mut State) {
     if state.player.passenger.is_some() { return }
 
     let mut loaded = None;
-    for (i, passenger) in state.passengers.iter().enumerate() {
+    for (i, passenger) in state.passengers.iter_mut().enumerate() {
         if let PassengerState::Waiting(_) = passenger.state {
-            if !same_level(passenger, &state.player.sprite.position) { continue; }
+            if !same_level(&passenger.sprite, &state.player.sprite.position) { continue; }
             if (passenger.sprite.centre() - state.player.sprite.centre()).len()
                 > 0.5 * passenger.sprite.collider_size.x {
                 continue;
             }
             loaded = Some(i);
+            passenger.state = PassengerState::Loaded;
             break;
         }
     }
@@ -188,11 +205,13 @@ pub fn try_knock_down(state: &mut State) {
     let player_aabb = state.player.sprite.aabb();
 
     for passenger in state.passengers.iter_mut() {
+        if passenger.state == PassengerState::Falling { continue; }
         if !passenger.sprite.aabb().intersects(&player_aabb) { continue; }
         if let PassengerState::Waiting(_) = passenger.state {
             state.board.gates[passenger.source_gate as usize].clear_passenger();
         }
         passenger.state = PassengerState::Falling;
+        state.player.stats.take_reputation();
     }
 }
 
@@ -212,16 +231,18 @@ pub fn try_unload(state: &mut State) {
     if (state.player.sprite.centre() - gate_centre(gate_position)).len() > PASSENGER_LOAD_DIST {
         return
     }
+    if !same_level(&state.player.sprite, &gate_position) { return }
 
     let mut passenger = state.player.passenger.take().unwrap();
     passenger.state = PassengerState::Landed(gate_position);
     passenger.sprite.position = state.player.sprite.position;
     state.passengers.push(passenger);
+    state.player.stats.score += 1;
 }
 
-fn same_level(passenger: &Passenger, v: &Vector2f) -> bool {
+fn same_level(sprite: &DynamicSprite, v: &Vector2f) -> bool {
     almost_eq(
-        passenger.sprite.position.y,
+        sprite.position.y,
         v.y
     ) 
 }

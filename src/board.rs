@@ -3,9 +3,9 @@ use rogalik_math::{
     vectors::{Vector2f, Vector2i}
 };
 use rogalik_engine::Color;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use crate::globals::{TILE_SIZE, BOARD_WIDTH};
+use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT};
 use crate::sprite::StaticSprite;
 
 #[derive(Default)]
@@ -27,36 +27,20 @@ impl Gate {
     }
 }
 
-pub fn generate_board() -> Board 
+pub fn generate_board(data: &str) -> Board 
 {
+    let locations = parse_str_data(data);
     let mut sprites = Vec::new();
     let mut colliders = Vec::new();
-
-    let mut rocks = HashSet::new();
-
-    for x in 0..BOARD_WIDTH {
-        rocks.insert(Vector2i::new(x as i32 - BOARD_WIDTH as i32 / 2, - 1));
-    }
-    rocks.insert(Vector2i::new(2, 2));
-    rocks.insert(Vector2i::new(3, 2));
-    rocks.insert(Vector2i::new(4, 2));
-    rocks.insert(Vector2i::new(-4, 5));
-    rocks.insert(Vector2i::new(-3, 5));
     
-    for r in rocks.iter() {
-        let (sprite, aabb) = get_rock(*r, &rocks);
+    for r in locations["rocks"].iter() {
+        let (sprite, aabb) = get_rock(*r, &locations["rocks"]);
         sprites.push(sprite);
         colliders.push(aabb);
     }
-
-    let gate_pos = vec![
-        Vector2f::new(TILE_SIZE * 2., TILE_SIZE * 3.),
-        Vector2f::new(TILE_SIZE * -3., TILE_SIZE * 6.),
-        Vector2f::new(-TILE_SIZE * 4., 0.)
-    ];
     let mut gates = Vec::new();
-    for (i, g) in gate_pos.iter().enumerate() {
-        let (sprite, gate) = get_gate(*g, i as u32);
+    for (i, g) in locations["gates"].iter().enumerate() {
+        let (sprite, gate) = get_gate(g.as_f32(), i as u32);
         sprites.push(sprite);
         gates.push(gate);
     }
@@ -91,4 +75,34 @@ fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
     };
     let gate = Gate { position, has_passenger: false, since_pickup: 0. };
     (sprite, gate)
+}
+
+fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
+    // the data should not have multibyte characters
+    // so it's safe byte len = char len
+    let lines = data.split('\n')
+        .map(|s| match s.len() {
+            a if a > BOARD_WIDTH as usize => s[..BOARD_WIDTH as usize].to_string(),
+            _ => s.to_string()
+        })
+        .collect::<Vec<_>>();
+    if lines.len() != 10 { panic!("Incorrect level data: row count mismatch!")};
+
+    let mut locations = HashMap::from_iter(vec![
+        ("rocks", HashSet::new()),
+        ("gates", HashSet::new()) 
+    ]);
+
+    for (row, line) in lines.iter().enumerate() {
+        let y = BOARD_HEIGHT - row as u32 - 1;
+        for (col, c) in line.chars().enumerate() {
+            let v = Vector2i::new(col as i32, y as i32);
+            match c {
+                '#' => { locations.get_mut("rocks").unwrap().insert(v); },
+                'G' => { locations.get_mut("gates").unwrap().insert(v); },
+                _ => ()
+            };
+        }
+    }
+    locations
 }

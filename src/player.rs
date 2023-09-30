@@ -4,9 +4,25 @@ use rogalik_math::{
 };
 use rogalik_engine::Color;
 
-use crate::globals::{GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG};
+use crate::globals::{
+    GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG, LIFT_ACC, DAMAGE_SPEED
+};
 use crate::passenger::Passenger;
 use crate::sprite::DynamicSprite;
+
+#[derive(Default)]
+pub struct Stats {
+    pub stamina: f32,
+    pub stamina_use: f32,
+    pub stamina_recovery: f32,
+    pub score: u32,
+    pub reputation: u32,
+}
+impl Stats {
+    pub fn take_reputation(&mut self) {
+        self.reputation = self.reputation.saturating_sub(1);
+    }
+}
 
 #[derive(Default)]
 pub struct Player {
@@ -14,7 +30,8 @@ pub struct Player {
     pub v: Vector2f,
     pub a: Vector2f,
     pub grounded: bool,
-    pub passenger: Option<Passenger>
+    pub passenger: Option<Passenger>,
+    pub stats: Stats
 }
 impl Player {
     pub fn new(
@@ -37,8 +54,20 @@ impl Player {
             v: Vector2f::ZERO,
             a: Vector2f::ZERO,
             grounded: false,
-            passenger: None
+            passenger: None,
+            stats: Stats::default()
         }
+    }
+}
+
+pub fn handle_lift(player: &mut Player, delta: f32, working: bool) {
+    if !working {
+        player.stats.stamina = 1.0_f32.min(player.stats.stamina + player.stats.stamina_recovery * delta);
+        return
+    }
+    if player.stats.stamina > 0. {
+        player.a.y = LIFT_ACC;
+        player.stats.stamina = 0.0_f32.max(player.stats.stamina - player.stats.stamina_use * delta);
     }
 }
 
@@ -46,7 +75,6 @@ pub fn move_player(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.v += delta * player.a;
     move_y(player, obstacles, delta);
     move_x(player, obstacles, delta);
-    // println!("{:?}, {:?}", player.a, player.v);
 }
 fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.grounded = false;
@@ -60,6 +88,11 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     if colliders.len() == 0 {
         player.sprite.position.y += dy;
         return;
+    }
+
+    // if collision on high speed, decr. rep
+    if player.v.y.abs() > DAMAGE_SPEED {
+        player.stats.take_reputation();
     }
 
     let y = if dy < 0. {

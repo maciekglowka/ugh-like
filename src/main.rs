@@ -18,7 +18,17 @@ mod ui;
 mod utils;
 
 #[derive(Default)]
+enum GameState {
+    #[default]
+    Init,
+    Play,
+    GameOver
+}
+
+#[derive(Default)]
 pub struct State {
+    game_state: GameState,
+    level_data: HashMap<&'static str, &'static str>,
     board: board::Board,
     animation_timer: ResourceId,
     textures: HashMap<&'static str, ResourceId>,
@@ -32,60 +42,24 @@ pub struct State {
 impl Game<WgpuContext> for State {
     fn setup(&mut self, context: &mut Context_) {
         load_assets(self, context);
-        self.board = board::generate_board();
-        self.player = player::Player::new(
-            Vector2f::new(0., 2.),
-            "actors",
-            0,
-            Color(255, 255, 255, 255),
-            Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
-        );
-        self.spawn_interval = 8.;
     }
     fn update(&mut self, context: &mut Context_) {
-        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
-            self.player.a.y = globals::LIFT_ACC;
-        }
-
-        if !self.player.grounded {
-            if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::D) {
-                self.player.a.x = globals::FLY_ACC;
+        match self.game_state {
+            GameState::Init => {
+                game_init(self, context);
             }
-            if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::A) {
-                self.player.a.x = -globals::FLY_ACC;
-            }
-        }
-
-        if context.time.get_timer(self.animation_timer).unwrap().is_finished() {
-            if self.player.a.y > 0. {
-                self.player.sprite.frame = (self.player.sprite.frame + 1) % globals::ACTOR_FRAMES;
-            }
-            for passenger in self.passengers.iter_mut() {
-                passenger.sprite.frame = (passenger.sprite.frame + 1) % globals::ACTOR_FRAMES;
-                let offset = match passenger.animation_state {
-                    passenger::PassengerAnimationState::Idle => 0,
-                    passenger::PassengerAnimationState::Walking => 4,
-                    passenger::PassengerAnimationState::Falling => 8,
-                };
-                passenger.sprite.frame += offset;
+            GameState::Play => {
+                game_loop(self, context);
+                render::render_sprites(self, context);
+                ui::render_game_ui(self, context);
+            },
+            GameState::GameOver => {
+                game_over_loop(self, context);
+                render::render_sprites(self, context);
+                ui::render_game_ui(self, context);
+                ui::render_game_over(self, context);
             }
         }
-        if context.time.get_timer(self.spawn_timer).unwrap().is_finished() {
-            passenger::try_spawn(self);
-        }
-
-        passenger::try_knock_down(self);
-        passenger::try_load(self);
-        passenger::try_unload(self);
-        self.passengers.retain(|p| !passenger::should_remove(p));
-
-        let obstacles = &self.board.colliders;
-        player::move_player(&mut self.player, obstacles, context.time.get_delta());
-        for passenger in self.passengers.iter_mut() {
-            passenger::move_passenger(passenger, &self.player, context.time.get_delta());
-        }
-        render::render_sprites(self, context);
-        ui::render_ui(self, context);
     }
 }
 
@@ -101,7 +75,75 @@ fn run() {
     engine.run();
 }
 
+fn game_loop(state: &mut State, context: &mut Context_) {
+    // check loose condition
+    if state.player.stats.reputation == 0 {
+        state.game_state = GameState::GameOver;
+        return
+    }
+
+    if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
+        player::handle_lift(&mut state.player, context.time.get_delta(), true);
+    } else {
+        player::handle_lift(&mut state.player, context.time.get_delta(), false);
+    }
+
+    if !state.player.grounded {
+        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::D) {
+            state.player.a.x = globals::FLY_ACC;
+        }
+        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::A) {
+            state.player.a.x = -globals::FLY_ACC;
+        }
+    }
+
+    if context.time.get_timer(state.animation_timer).unwrap().is_finished() {
+        if state.player.a.y > 0. {
+            state.player.sprite.frame = (state.player.sprite.frame + 1) % globals::ACTOR_FRAMES;
+        }
+        for passenger in state.passengers.iter_mut() {
+            passenger.sprite.frame = (passenger.sprite.frame + 1) % globals::ACTOR_FRAMES;
+            let offset = match passenger.animation_state {
+                passenger::PassengerAnimationState::Idle => 0,
+                passenger::PassengerAnimationState::Walking => 4,
+                passenger::PassengerAnimationState::Falling => 8,
+            };
+            passenger.sprite.frame += offset;
+        }
+    }
+    if context.time.get_timer(state.spawn_timer).unwrap().is_finished() {
+        passenger::try_spawn(state);
+    }
+
+    passenger::handle_waiting(state, context.time.get_delta());
+    passenger::try_knock_down(state);
+    passenger::try_load(state);
+    passenger::try_unload(state);
+    state.passengers.retain(|p| !passenger::should_remove(p));
+
+    let obstacles = &state.board.colliders;
+    player::move_player(&mut state.player, obstacles, context.time.get_delta());
+    for passenger in state.passengers.iter_mut() {
+        passenger::move_passenger(passenger, &state.player, context.time.get_delta());
+    }
+}
+
+fn game_init(state: &mut State, context: &mut Context_) {
+    reinit(state, context);
+    load_level(state, context, "playground");
+    state.game_state = GameState::Play;
+}
+
+fn game_over_loop(state: &mut State, context: &mut Context_) {
+    if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::Space) {
+        state.game_state = GameState::Init;
+    };
+}
+
 fn load_assets(state: &mut State, context: &mut Context_) {
+    let playground_lvl = include_str!("../assets/playground.lvl");
+    state.level_data.insert("playground", playground_lvl);
+
     let sprite_bytes_ascii = include_bytes!("../assets/ascii.png");
     let sprite_bytes_actors = include_bytes!("../assets/actors.png");
     let sprite_bytes_tiles = include_bytes!("../assets/tiles.png");
@@ -130,10 +172,34 @@ fn load_assets(state: &mut State, context: &mut Context_) {
         16
     );
 
-    let camera_0 = context.graphics.create_camera(64.0, Vector2f::new(0., 4.));
+    let camera_0 = context.graphics.create_camera(
+        globals::PIXEL_SCALE, Vector2f::new(globals::BOARD_WIDTH as f32 / 2., globals::BOARD_HEIGHT as f32 / 2.)
+    );
     context.graphics.set_camera(camera_0);
 
     state.animation_timer = context.time.add_timer(globals::ANIMATION_TICK);
     state.spawn_timer = context.time.add_timer(globals::SPAWN_TICK);
-    context.graphics.set_clear_color(Color(0, 0, 0, 255));
+    context.graphics.set_clear_color(Color(3, 2, 2, 255));
+}
+
+fn load_level(state: &mut State, context: &mut Context_, name: &str) {
+    let data = state.level_data.get(name).expect("Level data not found!");
+    state.board = board::generate_board(data);
+}
+
+fn reinit(state: &mut State, context: &mut Context_) {
+    // reinitialize the game state for a fresh game or restart
+    state.player = player::Player::new(
+        Vector2f::new((globals::BOARD_WIDTH / 2) as f32, 2.),
+        "actors",
+        0,
+        Color(255, 255, 255, 255),
+        Vector2f::new(globals::TILE_SIZE, globals::TILE_SIZE)
+    );
+    state.player.stats.reputation = globals::BASE_REPUTATION;
+    state.player.stats.stamina_use = globals::BASE_STAMINA_USE;
+    state.player.stats.stamina_recovery = globals::BASE_STAMINA_RECOVERY;
+    state.player.stats.stamina = 1.0;
+    state.spawn_interval = 8.;
+    state.since_spawn = 0.;
 }
