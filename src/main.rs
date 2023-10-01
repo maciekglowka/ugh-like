@@ -22,6 +22,7 @@ mod utils;
 #[derive(Default)]
 enum GameState {
     #[default]
+    MainMenu,
     Init,
     Play,
     GameOver
@@ -31,6 +32,7 @@ enum GameState {
 pub struct State {
     audio: audio::AudioContext,
     game_state: GameState,
+    level: &'static str,
     level_data: HashMap<&'static str, &'static str>,
     board: board::Board,
     animation_timer: ResourceId,
@@ -49,6 +51,9 @@ impl Game<WgpuContext> for State {
     }
     fn update(&mut self, context: &mut Context_) {
         match self.game_state {
+            GameState::MainMenu => {
+                ui::render_main_menu(self, context);
+            },
             GameState::Init => {
                 game_init(self, context);
             }
@@ -75,7 +80,7 @@ fn main() {
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 fn run() {
     let state = State::default();
-    let engine = Engine::new(state, 1024., 640., "Grota");
+    let engine = Engine::new(state, 1024, 640, "Grota");
     engine.run();
 }
 
@@ -148,19 +153,19 @@ fn update_difficulty(state: &mut State) {
 
 fn game_init(state: &mut State, context: &mut Context_) {
     reinit(state, context);
-    load_level(state, context, "playground");
+    load_level(state, context, state.level);
     state.game_state = GameState::Play;
 }
 
 fn game_over_loop(state: &mut State, context: &mut Context_) {
     if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::Space) {
-        state.game_state = GameState::Init;
+        state.game_state = GameState::MainMenu;
     };
 }
 
 fn load_assets(state: &mut State, context: &mut Context_) {
-    let playground_lvl = include_str!("../assets/playground.lvl");
-    state.level_data.insert("playground", playground_lvl);
+    state.level_data.insert("Playground", include_str!("../assets/playground.lvl"));
+    state.level_data.insert("Birdy", include_str!("../assets/birdy.lvl"));
 
     state.textures.insert(
         "ascii",

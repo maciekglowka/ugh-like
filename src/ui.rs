@@ -96,11 +96,12 @@ pub fn render_game_over(state: &State, context: &mut Context_) {
         0.5 * vs.x,
         0.5 * vs.y,
     );
-    render_centered_text(centre, "GAME OVER", TILE_SIZE, state, context);
+    render_centered_text(centre, "GAME OVER", TILE_SIZE, UI_BG, state, context);
     render_centered_text(
         centre - Vector2f::new(0., TILE_SIZE * 1.25),
         &format!("Passengers delivered: {}", state.player.stats.score),
         0.5 *TILE_SIZE,
+        UI_BG,
         state,
         context
     );
@@ -108,6 +109,7 @@ pub fn render_game_over(state: &State, context: &mut Context_) {
         centre - Vector2f::new(0., TILE_SIZE * 2.),
         "(press spacebar)",
         0.5 *TILE_SIZE,
+        UI_BG,
         state,
         context
     );
@@ -118,12 +120,110 @@ fn text_width(t: &str, height: f32) -> f32 {
     height * t.len() as f32
 }
 
-fn render_centered_text(v: Vector2f, t: &str, height: f32, state: &State, context: &mut Context_) {
+fn render_centered_text(
+    v: Vector2f,
+    t: &str,
+    height: f32,
+    color: Color,
+    state: &State,
+    context: &mut Context_
+) {
     context.graphics.draw_text(
         state.font,
         &t,
         v - Vector2f::new(0.5 * text_width(&t, height), 0.),
         height,
-        Params2d { color: UI_BG, ..Default::default() }
+        Params2d { color, ..Default::default() }
     );
+}
+
+pub fn render_main_menu(state: &mut State, context: &mut Context_) {
+    let button_height = TILE_SIZE;
+    let button_width = TILE_SIZE * 8.;
+    let vs = context.get_viewport_size() / PIXEL_SCALE;
+
+    render_centered_text(
+        Vector2f::new(0.5 * vs.x, vs.y - 2. * TILE_SIZE),
+        "Grota",
+        TILE_SIZE,
+        UI_BG,
+        state,
+        context
+    );
+
+    let base = Vector2f::new(
+        0.5 * vs.x - button_width / 2.,
+        vs.y - 3.5 * TILE_SIZE
+    );
+    for (i, level) in state.level_data.keys().enumerate() {
+        let button = Button::new(
+                base.x,
+                base.y - i as f32 * 1.25 * button_height,
+                button_width,
+                button_height
+            )
+            .with_text(level.to_string())
+            .with_color(Color(255, 255, 255, 255));
+        button.draw(state, context);
+        if button.clicked(context) {
+            state.level = level;
+            state.game_state = super::GameState::Init;
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct Button {
+    origin: Vector2f,
+    w: f32,
+    h: f32,
+    text: String,
+    color: Color
+}
+impl Button {
+    pub fn new(x: f32, y: f32, w: f32, h: f32) -> Self {
+        Button { 
+            origin: Vector2f::new(x, y),
+            w,
+            h,
+            ..Default::default()
+        }
+    }
+    pub fn with_text(mut self, text: String) -> Self {
+        self.text = text;
+        self
+    }
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.color = color;
+        self
+    }
+    pub fn draw(&self, state: &State, context: &mut Context_) {
+        context.graphics.draw_atlas_sprite(
+            state.textures["ascii"],
+            219,
+            self.origin,
+            Vector2f::new(self.w, self.h),
+            Params2d { color: UI_BG, ..Default::default() }
+        );
+        render_centered_text(
+            self.origin + Vector2f::new(self.w / 2., 0.25* self.h),
+            &self.text,
+            self.h / 2.,
+            self.color,
+            state,
+            context
+        );
+    }
+    pub fn clicked(&self, context: &Context_) -> bool {
+        if !context.input.is_mouse_button_down(rogalik_engine::input::MouseButton::Left) { 
+            return false;
+        }
+        if let Some(camera) = context.graphics.get_camera(rogalik_engine::ResourceId(0)) {
+            let m = context.input.get_mouse_position();
+            let v = camera.camera_to_world(m);
+            return v.x >= self.origin.x && v.y >= self.origin.y &&
+                v.x <= self.origin.x + self.w && v.y <= self.origin.y + self.h;
+        }
+        false
+    }
 }

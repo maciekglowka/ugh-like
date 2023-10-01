@@ -15,8 +15,7 @@ pub struct AudioContext {
 }
 impl AudioContext {
     pub fn play(&mut self, sound: &str) {
-        let handle = self.sounds.get(sound)
-            .expect(&format!("No such audio {}", sound));
+        let Some(handle) = self.sounds.get(sound) else { return };
         if let Some(context) = self.inner.as_mut() {
             let mut state = context.state();
             let source = state.source_mut(*handle);
@@ -27,7 +26,12 @@ impl AudioContext {
 }
 
 pub fn get_audio_context() -> AudioContext {
-    let engine = SoundEngine::new().expect("Can't create the sound engine!");
+    let Ok(engine) = SoundEngine::new() else {
+        return AudioContext {
+            inner: None,
+            sounds: HashMap::new()
+        }
+    };
     let context = SoundContext::new();
     engine.state().add_context(context.clone());
 
