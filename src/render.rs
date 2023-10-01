@@ -16,6 +16,9 @@ pub fn render_sprites(state: &State, context: &mut Context_) {
     for passenger in state.passengers.iter() {
         render_dynamic_sprite(&passenger.sprite, state, context);
     }
+    for creature in state.creatures.iter() {
+        render_dynamic_sprite(&creature.sprite, state, context);
+    }
 }
 
 fn render_background(state: &State, context: &mut Context_) {

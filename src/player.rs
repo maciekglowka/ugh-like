@@ -5,10 +5,12 @@ use rogalik_math::{
 use rogalik_engine::Color;
 
 use crate::globals::{
-    GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG, LIFT_ACC, DAMAGE_SPEED
+    GRAVITY_ACC, FLY_MAX_SPEED, LIFT_MAX_SPEED, HOR_DRAG, LIFT_ACC, DAMAGE_SPEED,
+    HIT_IMMUNITY, TOLERANCE
 };
 use crate::passenger::Passenger;
 use crate::sprite::DynamicSprite;
+use crate::utils::almost_eq;
 
 use super::State;
 
@@ -32,6 +34,7 @@ pub struct Player {
     pub v: Vector2f,
     pub a: Vector2f,
     pub grounded: bool,
+    pub immunity: f32,
     pub passenger: Option<Passenger>,
     pub stats: Stats
 }
@@ -57,9 +60,17 @@ impl Player {
             a: Vector2f::ZERO,
             grounded: false,
             passenger: None,
+            immunity: 0.,
             stats: Stats::default()
         }
     }
+}
+
+pub fn try_hit(player: &mut Player) -> bool {
+    if player.immunity > TOLERANCE { return false; }
+    player.immunity = HIT_IMMUNITY;
+    player.stats.take_reputation();
+    true
 }
 
 pub fn handle_lift(player: &mut Player, delta: f32, working: bool) {
@@ -73,11 +84,18 @@ pub fn handle_lift(player: &mut Player, delta: f32, working: bool) {
     }
 }
 
-pub fn move_player(state: &mut State, delta: f32) {
+pub fn update_player(state: &mut State, delta: f32) {
+    state.player.immunity = 0.0_f32.max(
+        state.player.immunity - delta
+    );
+    let blink = (state.player.immunity * 10.) as u32 % 2 == 1;
+    state.player.sprite.color.3 = if blink { 0 } else { 255 };
     let obstacles = &state.board.colliders;
     state.player.v += delta * state.player.a;
     if move_y(&mut state.player, obstacles, delta) {
-        state.audio.play("hit");
+        if try_hit(&mut state.player) {
+            state.audio.play("hit");
+        }
     }
     move_x(&mut state.player, obstacles, delta);
 }
@@ -99,7 +117,6 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) -> bool {
     let mut damage = false;
     // if collision on high speed, decr. rep
     if player.v.y.abs() > DAMAGE_SPEED {
-        player.stats.take_reputation();
         damage = true;
     }
 

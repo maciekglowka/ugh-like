@@ -38,6 +38,7 @@ pub struct State {
     font: ResourceId,
     player: player::Player,
     passengers: Vec<passenger::Passenger>,
+    creatures: Vec<creatures::Creature>,
     since_spawn: f32,
     spawn_timer: ResourceId,
     spawn_interval: f32
@@ -126,9 +127,14 @@ fn game_loop(state: &mut State, context: &mut Context_) {
     passenger::try_unload(state);
     state.passengers.retain(|p| !passenger::should_remove(p));
 
-    player::move_player(state, context.time.get_delta());
+    creatures::check_interactions(state);
+
+    player::update_player(state, context.time.get_delta());
     for passenger in state.passengers.iter_mut() {
         passenger::move_passenger(passenger, &state.player, context.time.get_delta());
+    }
+    for creature in state.creatures.iter_mut() {
+        creatures::update_creature(creature, context.time.get_delta());
     }
 }
 
@@ -195,7 +201,7 @@ fn load_assets(state: &mut State, context: &mut Context_) {
 
 fn load_level(state: &mut State, context: &mut Context_, name: &str) {
     let data = state.level_data.get(name).expect("Level data not found!");
-    state.board = board::generate_board(data);
+    (state.board, state.creatures) = board::generate_board(data);
 }
 
 fn reinit(state: &mut State, context: &mut Context_) {

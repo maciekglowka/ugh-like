@@ -28,6 +28,8 @@ pub const GRAVITY_ACC: f32 = 5.;
 pub const DAMAGE_SPEED: f32 = 5.;
 
 pub const BIRD_SPEED: f32 = 5.;
+pub const BIRD_MARGIN: u32 = 4;
+pub const HIT_IMMUNITY: f32 = 2.;
 
 pub const ACTOR_FRAMES: usize = 4;
 pub const ANIMATION_TICK: f32 = 0.1;

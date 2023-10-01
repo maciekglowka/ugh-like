@@ -125,7 +125,8 @@ pub fn handle_waiting(state: &mut State, delta: f32) {
             *time += delta;
             if *time >= PASSENGER_MAX_WAIT {
                 state.player.stats.take_reputation();
-                passenger.state = PassengerState::Resigned
+                passenger.state = PassengerState::Resigned;
+                state.audio.play("resign");
             }
         }
     }
@@ -213,6 +214,7 @@ pub fn try_knock_down(state: &mut State) {
         }
         passenger.state = PassengerState::Falling;
         state.player.stats.take_reputation();
+        state.audio.play("hit");
     }
 }
 

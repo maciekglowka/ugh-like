@@ -16,7 +16,7 @@ pub struct AudioContext {
 impl AudioContext {
     pub fn play(&mut self, sound: &str) {
         let handle = self.sounds.get(sound)
-            .expect(&format!("Np such audio {}", sound));
+            .expect(&format!("No such audio {}", sound));
         if let Some(context) = self.inner.as_mut() {
             let mut state = context.state();
             let source = state.source_mut(*handle);
@@ -35,6 +35,7 @@ pub fn get_audio_context() -> AudioContext {
     data.insert("hit", include_bytes!("../assets/hit.wav").to_vec());
     data.insert("load", include_bytes!("../assets/load.wav").to_vec());
     data.insert("unload", include_bytes!("../assets/unload.wav").to_vec());
+    data.insert("resign", include_bytes!("../assets/resign.wav").to_vec());
 
     let mut sounds = HashMap::new();
 

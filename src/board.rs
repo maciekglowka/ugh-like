@@ -5,6 +5,7 @@ use rogalik_math::{
 use rogalik_engine::Color;
 use std::collections::{HashMap, HashSet};
 
+use crate::creatures::{Creature, CreatureKind};
 use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT};
 use crate::sprite::StaticSprite;
 
@@ -27,7 +28,7 @@ impl Gate {
     }
 }
 
-pub fn generate_board(data: &str) -> Board 
+pub fn generate_board(data: &str) -> (Board, Vec<Creature>)
 {
     let locations = parse_str_data(data);
     let mut sprites = Vec::new();
@@ -45,7 +46,12 @@ pub fn generate_board(data: &str) -> Board
         gates.push(gate);
     }
 
-    Board { sprites, colliders, gates }
+    let mut creatures = Vec::new();
+    for position in locations["birds"].iter() {
+        creatures.push(get_bird(position.as_f32()));
+    }
+
+    (Board { sprites, colliders, gates }, creatures)
 }
 
 
@@ -77,6 +83,17 @@ fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
     (sprite, gate)
 }
 
+fn get_bird(position: Vector2f) -> Creature {
+    Creature::new(
+        CreatureKind::Bird,
+        position,
+        "actors",
+        12,
+        Color(255, 255, 255, 255),
+        Vector2f::new(TILE_SIZE, TILE_SIZE),
+    )
+}
+
 fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
     // the data should not have multibyte characters
     // so it's safe byte len = char len
@@ -90,7 +107,8 @@ fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
 
     let mut locations = HashMap::from_iter(vec![
         ("rocks", HashSet::new()),
-        ("gates", HashSet::new()) 
+        ("gates", HashSet::new()),
+        ("birds", HashSet::new()),
     ]);
 
     for (row, line) in lines.iter().enumerate() {
@@ -100,6 +118,7 @@ fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
             match c {
                 '#' => { locations.get_mut("rocks").unwrap().insert(v); },
                 'G' => { locations.get_mut("gates").unwrap().insert(v); },
+                'B' => { locations.get_mut("birds").unwrap().insert(v); },
                 _ => ()
             };
         }
