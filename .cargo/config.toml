@@ -5,3 +5,6 @@ rustflags = [
   "-Lnative=/var/lib/xwin/sdk/lib/um/x86_64",
   "-Lnative=/var/lib/xwin/sdk/lib/ucrt/x86_64"
 ]
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"
