@@ -7,7 +7,10 @@ pub const BOARD_HEIGHT: u32 = 10;
 
 pub const BASE_REPUTATION: u32 = 5;
 pub const BASE_STAMINA_USE: f32 = 0.1;
-pub const BASE_STAMINA_RECOVERY: f32 = 0.035;
+pub const BASE_STAMINA_RECOVERY: f32 = 0.04;
+
+pub const BASE_SPAWN_INTERVAL: f32 = 8.;
+pub const SPAWN_DROP_EVERY: u32 = 10;
 
 pub const TOLERANCE: f32 = 0.01;
 pub const PASSENGER_LOAD_DIST: f32 = 3.;
@@ -23,6 +26,8 @@ pub const LIFT_ACC: f32 = 3.;
 pub const LIFT_MAX_SPEED: f32 = 4.;
 pub const GRAVITY_ACC: f32 = 5.;
 pub const DAMAGE_SPEED: f32 = 5.;
+
+pub const BIRD_SPEED: f32 = 5.;
 
 pub const ACTOR_FRAMES: usize = 4;
 pub const ANIMATION_TICK: f32 = 0.1;

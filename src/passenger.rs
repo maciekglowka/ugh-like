@@ -190,6 +190,7 @@ pub fn try_load(state: &mut State) {
             }
             loaded = Some(i);
             passenger.state = PassengerState::Loaded;
+            state.audio.play("load");
             break;
         }
     }
@@ -238,6 +239,7 @@ pub fn try_unload(state: &mut State) {
     passenger.sprite.position = state.player.sprite.position;
     state.passengers.push(passenger);
     state.player.stats.score += 1;
+    state.audio.play("unload");
 }
 
 fn same_level(sprite: &DynamicSprite, v: &Vector2f) -> bool {

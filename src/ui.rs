@@ -55,10 +55,10 @@ fn render_status_bar(state: &State, context: &mut Context_) {
     for i in 0..state.player.stats.reputation {
         context.graphics.draw_atlas_sprite(
             state.textures["ascii"],
-            2,
+            3,
             base + Vector2f::new(offset + i as f32 * height, 0.),
             Vector2f::new(height, height),
-            Params2d { color: UI_BG, ..Default::default() }
+            Params2d { color: UI_RED, ..Default::default() }
         );
     }
     offset += BASE_REPUTATION as f32 * height + margin;

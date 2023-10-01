@@ -19,7 +19,7 @@ pub fn render_sprites(state: &State, context: &mut Context_) {
 }
 
 fn render_background(state: &State, context: &mut Context_) {
-    let base = -1.0 * Vector2f::new(BOARD_WIDTH as f32 / 2., 0.);
+    let base = Vector2f::new(0., 0.);
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
             context.graphics.draw_atlas_sprite(

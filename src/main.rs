@@ -8,7 +8,9 @@ use wasm_bindgen::prelude::*;
 
 type Context_ = Context<WgpuContext>;
 
+mod audio;
 mod board;
+mod creatures;
 mod globals;
 mod passenger;
 mod player;
@@ -27,6 +29,7 @@ enum GameState {
 
 #[derive(Default)]
 pub struct State {
+    audio: audio::AudioContext,
     game_state: GameState,
     level_data: HashMap<&'static str, &'static str>,
     board: board::Board,
@@ -81,9 +84,11 @@ fn game_loop(state: &mut State, context: &mut Context_) {
         state.game_state = GameState::GameOver;
         return
     }
+    update_difficulty(state);
 
     if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
         player::handle_lift(&mut state.player, context.time.get_delta(), true);
+
     } else {
         player::handle_lift(&mut state.player, context.time.get_delta(), false);
     }
@@ -121,11 +126,15 @@ fn game_loop(state: &mut State, context: &mut Context_) {
     passenger::try_unload(state);
     state.passengers.retain(|p| !passenger::should_remove(p));
 
-    let obstacles = &state.board.colliders;
-    player::move_player(&mut state.player, obstacles, context.time.get_delta());
+    player::move_player(state, context.time.get_delta());
     for passenger in state.passengers.iter_mut() {
         passenger::move_passenger(passenger, &state.player, context.time.get_delta());
     }
+}
+
+fn update_difficulty(state: &mut State) {
+    let decr = state.player.stats.score / globals::SPAWN_DROP_EVERY;
+    state.spawn_interval = 1.0_f32.max(globals::BASE_SPAWN_INTERVAL - decr as f32);
 }
 
 fn game_init(state: &mut State, context: &mut Context_) {
@@ -172,6 +181,8 @@ fn load_assets(state: &mut State, context: &mut Context_) {
         16
     );
 
+    state.audio = audio::get_audio_context();
+
     let camera_0 = context.graphics.create_camera(
         globals::PIXEL_SCALE, Vector2f::new(globals::BOARD_WIDTH as f32 / 2., globals::BOARD_HEIGHT as f32 / 2.)
     );
@@ -200,6 +211,8 @@ fn reinit(state: &mut State, context: &mut Context_) {
     state.player.stats.stamina_use = globals::BASE_STAMINA_USE;
     state.player.stats.stamina_recovery = globals::BASE_STAMINA_RECOVERY;
     state.player.stats.stamina = 1.0;
-    state.spawn_interval = 8.;
+    state.player.passenger = None;
+    state.passengers = Vec::new();
+    state.spawn_interval = globals::BASE_SPAWN_INTERVAL;
     state.since_spawn = 0.;
 }

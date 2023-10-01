@@ -10,6 +10,8 @@ use crate::globals::{
 use crate::passenger::Passenger;
 use crate::sprite::DynamicSprite;
 
+use super::State;
+
 #[derive(Default)]
 pub struct Stats {
     pub stamina: f32,
@@ -71,12 +73,17 @@ pub fn handle_lift(player: &mut Player, delta: f32, working: bool) {
     }
 }
 
-pub fn move_player(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
-    player.v += delta * player.a;
-    move_y(player, obstacles, delta);
-    move_x(player, obstacles, delta);
+pub fn move_player(state: &mut State, delta: f32) {
+    let obstacles = &state.board.colliders;
+    state.player.v += delta * state.player.a;
+    if move_y(&mut state.player, obstacles, delta) {
+        state.audio.play("hit");
+    }
+    move_x(&mut state.player, obstacles, delta);
 }
-fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
+fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) -> bool {
+    // returns true on damage
+    // TODO - make a result struct or smth?
     player.grounded = false;
     player.v.y = player.v.y.min(LIFT_MAX_SPEED);
     player.a.y = -GRAVITY_ACC;
@@ -87,12 +94,13 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     );
     if colliders.len() == 0 {
         player.sprite.position.y += dy;
-        return;
+        return false;
     }
-
+    let mut damage = false;
     // if collision on high speed, decr. rep
     if player.v.y.abs() > DAMAGE_SPEED {
         player.stats.take_reputation();
+        damage = true;
     }
 
     let y = if dy < 0. {
@@ -106,6 +114,7 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     };
     player.sprite.position.y = y;
     player.v.y = 0.;
+    damage
 }
 fn move_x(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.a.x = match player.v.x {
