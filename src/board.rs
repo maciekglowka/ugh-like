@@ -87,10 +87,11 @@ fn get_bird(position: Vector2f) -> Creature {
     Creature::new(
         CreatureKind::Bird,
         position,
-        "actors",
-        12,
+        "creatures",
+        0,
         Color(255, 255, 255, 255),
-        Vector2f::new(TILE_SIZE, TILE_SIZE),
+        Vector2f::new(TILE_SIZE, 0.5 * TILE_SIZE),
+        Vector2f::new(0., 0.25 * TILE_SIZE),
     )
 }
 

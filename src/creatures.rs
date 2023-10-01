@@ -27,6 +27,7 @@ impl Creature {
         sprite_index: usize,
         color: Color,
         collider_size: Vector2f,
+        collider_offset: Vector2f,
     ) -> Self {
         let sprite = DynamicSprite::new(
             position,
@@ -34,7 +35,7 @@ impl Creature {
             sprite_index,
             color,
             collider_size,
-            Vector2f::ZERO
+            collider_offset
         );
         Self {
             kind,

@@ -116,6 +116,9 @@ fn game_loop(state: &mut State, context: &mut Context_) {
             };
             passenger.sprite.frame += offset;
         }
+        for creature in state.creatures.iter_mut() {
+            creature.sprite.frame = (creature.sprite.frame + 1) % globals::ACTOR_FRAMES;
+        }
     }
     if context.time.get_timer(state.spawn_timer).unwrap().is_finished() {
         passenger::try_spawn(state);
@@ -159,30 +162,33 @@ fn load_assets(state: &mut State, context: &mut Context_) {
     let playground_lvl = include_str!("../assets/playground.lvl");
     state.level_data.insert("playground", playground_lvl);
 
-    let sprite_bytes_ascii = include_bytes!("../assets/ascii.png");
-    let sprite_bytes_actors = include_bytes!("../assets/actors.png");
-    let sprite_bytes_tiles = include_bytes!("../assets/tiles.png");
+    state.textures.insert(
+        "ascii",
+        context.graphics.load_sprite_atlas(
+            include_bytes!("../assets/ascii.png"), 16, 16
+        )
+    );
+    state.textures.insert(
+        "tiles",
+        context.graphics.load_sprite_atlas(
+            include_bytes!("../assets/tiles.png"), 4, 4
+        )
+    );
+    state.textures.insert(
+        "actors",
+        context.graphics.load_sprite_atlas(
+            include_bytes!("../assets/actors.png"), 4, 4
+        )
+    );
+    state.textures.insert(
+        "creatures",
+        context.graphics.load_sprite_atlas(
+            include_bytes!("../assets/creatures.png"), 4, 4
+        )
+    );
 
-    let t_0 = context.graphics.load_sprite_atlas(
-        sprite_bytes_ascii,
-        16,
-        16
-    );
-    let t_1 = context.graphics.load_sprite_atlas(
-        sprite_bytes_actors,
-        4,
-        4
-    );
-    let t_2 = context.graphics.load_sprite_atlas(
-        sprite_bytes_tiles,
-        4,
-        4
-    );
-    state.textures.insert("ascii", t_0);
-    state.textures.insert("actors", t_1);
-    state.textures.insert("tiles", t_2);
     state.font = context.graphics.load_font(
-        sprite_bytes_ascii,
+        include_bytes!("../assets/ascii.png"),
         16,
         16
     );
