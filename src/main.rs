@@ -1,4 +1,4 @@
-use rogalik_engine::{Context, GraphicsContext, Engine, Game, ResourceId, Color};
+use rogalik_engine::{Context, GraphicsContext, EngineBuilder, Game, ResourceId, Color};
 use rogalik_math::vectors::Vector2f;
 use rogalik_wgpu::WgpuContext;
 use std::collections::{HashMap, VecDeque};
@@ -31,6 +31,7 @@ enum GameState {
 #[derive(Default)]
 pub struct State {
     audio: audio::AudioContext,
+    camera_main: ResourceId,
     game_state: GameState,
     level: &'static str,
     level_data: HashMap<&'static str, &'static str>,
@@ -80,7 +81,12 @@ fn main() {
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 fn run() {
     let state = State::default();
-    let engine = Engine::new(state, 1024, 640, "Grota");
+    let engine = EngineBuilder::new()
+        .with_title("Grrr!".to_string())
+        .with_logical_size(1024., 640.)
+        .build(state);
+    
+    //state, 1024, 640, "Grota");
     engine.run();
 }
 
@@ -200,10 +206,10 @@ fn load_assets(state: &mut State, context: &mut Context_) {
 
     state.audio = audio::get_audio_context();
 
-    let camera_0 = context.graphics.create_camera(
+    state.camera_main = context.graphics.create_camera(
         globals::PIXEL_SCALE, Vector2f::new(globals::BOARD_WIDTH as f32 / 2., globals::BOARD_HEIGHT as f32 / 2.)
     );
-    context.graphics.set_camera(camera_0);
+    context.graphics.set_camera(state.camera_main);
 
     state.animation_timer = context.time.add_timer(globals::ANIMATION_TICK);
     state.spawn_timer = context.time.add_timer(globals::SPAWN_TICK);

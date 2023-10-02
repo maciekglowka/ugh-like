@@ -3,6 +3,18 @@
 version = 3
 
 [[package]]
+name = "Grrr"
+version = "0.1.0"
+dependencies = [
+ "fyrox-sound",
+ "rand",
+ "rogalik_engine",
+ "rogalik_math",
+ "rogalik_wgpu",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "aaudio"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -923,18 +935,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bf0b36e6f090b7e1d8a4b49c0cb81c1f8376f72198c65dd3ad9ff3556b8b78c"
 dependencies = [
  "bitflags 2.4.0",
-]
-
-[[package]]
-name = "grota"
-version = "0.1.0"
-dependencies = [
- "fyrox-sound",
- "rand",
- "rogalik_engine",
- "rogalik_math",
- "rogalik_wgpu",
- "wasm-bindgen",
 ]
 
 [[package]]

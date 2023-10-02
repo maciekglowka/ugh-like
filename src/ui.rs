@@ -1,4 +1,4 @@
-use rogalik_engine::{Color, GraphicsContext, Params2d};
+use rogalik_engine::{Color, GraphicsContext, Params2d, ResourceId};
 use rogalik_math::vectors::Vector2f;
 
 use super::{Context_, State};
@@ -43,7 +43,7 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
 }
 
 fn render_status_bar(state: &State, context: &mut Context_) {
-    let top = context.get_viewport_size().y / PIXEL_SCALE;
+    let top = context.get_logical_size().y / PIXEL_SCALE;
     let base = Vector2f::new(0.25, top - 0.5 * TILE_SIZE);
     let stamina_width = 4. * TILE_SIZE;
     let height = 0.25 * TILE_SIZE;
@@ -91,7 +91,7 @@ fn render_status_bar(state: &State, context: &mut Context_) {
 }
 
 pub fn render_game_over(state: &State, context: &mut Context_) {
-    let vs = context.get_viewport_size() / PIXEL_SCALE;
+    let vs = context.get_logical_size() / PIXEL_SCALE;
     let centre = Vector2f::new(
         0.5 * vs.x,
         0.5 * vs.y,
@@ -140,11 +140,15 @@ fn render_centered_text(
 pub fn render_main_menu(state: &mut State, context: &mut Context_) {
     let button_height = TILE_SIZE;
     let button_width = TILE_SIZE * 8.;
-    let vs = context.get_viewport_size() / PIXEL_SCALE;
+    let vs = context.get_logical_size();
+    let top = Vector2f::new(
+        0.5 * vs.x / PIXEL_SCALE,
+        vs.y / PIXEL_SCALE,
+    );
 
     render_centered_text(
-        Vector2f::new(0.5 * vs.x, vs.y - 2. * TILE_SIZE),
-        "Grota",
+        top - Vector2f::new(0., 2. * TILE_SIZE),
+        "Grrr!",
         TILE_SIZE,
         UI_BG,
         state,
@@ -152,8 +156,8 @@ pub fn render_main_menu(state: &mut State, context: &mut Context_) {
     );
 
     let base = Vector2f::new(
-        0.5 * vs.x - button_width / 2.,
-        vs.y - 3.5 * TILE_SIZE
+        top.x - 0.5 * button_width,
+        top.y - 3.5 * TILE_SIZE
     );
     for (i, level) in state.level_data.keys().enumerate() {
         let button = Button::new(
@@ -165,7 +169,7 @@ pub fn render_main_menu(state: &mut State, context: &mut Context_) {
             .with_text(level.to_string())
             .with_color(Color(255, 255, 255, 255));
         button.draw(state, context);
-        if button.clicked(context) {
+        if button.clicked(state.camera_main, context) {
             state.level = level;
             state.game_state = super::GameState::Init;
         }
@@ -214,12 +218,12 @@ impl Button {
             context
         );
     }
-    pub fn clicked(&self, context: &Context_) -> bool {
+    pub fn clicked(&self, camera_id: ResourceId, context: &Context_) -> bool {
         if !context.input.is_mouse_button_down(rogalik_engine::input::MouseButton::Left) { 
             return false;
         }
-        if let Some(camera) = context.graphics.get_camera(rogalik_engine::ResourceId(0)) {
-            let m = context.input.get_mouse_position();
+        if let Some(camera) = context.graphics.get_camera(camera_id) {
+            let m = context.input.get_mouse_physical_position();
             let v = camera.camera_to_world(m);
             return v.x >= self.origin.x && v.y >= self.origin.y &&
                 v.x <= self.origin.x + self.w && v.y <= self.origin.y + self.h;
