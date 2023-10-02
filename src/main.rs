@@ -1,4 +1,5 @@
 use rogalik_engine::{Context, GraphicsContext, EngineBuilder, Game, ResourceId, Color};
+use rogalik_engine::input::VirtualKeyCode;
 use rogalik_math::vectors::Vector2f;
 use rogalik_wgpu::WgpuContext;
 use std::collections::{HashMap, VecDeque};
@@ -98,7 +99,7 @@ fn game_loop(state: &mut State, context: &mut Context_) {
     }
     update_difficulty(state);
 
-    if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::W) {
+    if context.input.is_key_down(VirtualKeyCode::W) || context.input.is_key_down(VirtualKeyCode::Up) {
         player::handle_lift(&mut state.player, context.time.get_delta(), true);
 
     } else {
@@ -106,10 +107,10 @@ fn game_loop(state: &mut State, context: &mut Context_) {
     }
 
     if !state.player.grounded {
-        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::D) {
+        if context.input.is_key_down(VirtualKeyCode::D) || context.input.is_key_down(VirtualKeyCode::Right) {
             state.player.a.x = globals::FLY_ACC;
         }
-        if context.input.is_key_down(rogalik_engine::input::VirtualKeyCode::A) {
+        if context.input.is_key_down(VirtualKeyCode::A) || context.input.is_key_down(VirtualKeyCode::Left) {
             state.player.a.x = -globals::FLY_ACC;
         }
     }
@@ -170,7 +171,7 @@ fn game_over_loop(state: &mut State, context: &mut Context_) {
 }
 
 fn load_assets(state: &mut State, context: &mut Context_) {
-    state.level_data.insert("Playground", include_str!("../assets/playground.lvl"));
+    state.level_data.insert("Tricity", include_str!("../assets/tricity.lvl"));
     state.level_data.insert("Birdy", include_str!("../assets/birdy.lvl"));
 
     state.textures.insert(
