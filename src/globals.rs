@@ -5,7 +5,7 @@ pub const PASSENGER_WIDTH: f32 = 0.5;
 pub const BOARD_WIDTH: u32 = 16;
 pub const BOARD_HEIGHT: u32 = 10;
 
-pub const BASE_REPUTATION: u32 = 3;
+pub const BASE_REPUTATION: u32 = 5;
 pub const BASE_STAMINA_USE: f32 = 0.1;
 pub const BASE_STAMINA_RECOVERY: f32 = 0.04;
 
