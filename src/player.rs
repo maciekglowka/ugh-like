@@ -135,15 +135,15 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) -> bool {
 }
 fn move_x(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) {
     player.a.x = match player.v.x {
-        x if x < 0. => HOR_DRAG,
-        x if x > 0. => -HOR_DRAG,
+        x if x < -TOLERANCE => HOR_DRAG,
+        x if x > TOLERANCE => -HOR_DRAG,
         _ => 0.,
     };
 
     player.v.x = player.v.x.clamp(-FLY_MAX_SPEED, FLY_MAX_SPEED);
+    if almost_eq(player.v.x, 0.) { player.v.x = 0. }
     let dx = delta * player.v.x;
 
-    // let target = player.sprite.position + Vector2f::new(dx, 0.);
     let colliders = collision(
         player.sprite.aabb_moved(Vector2f::new(dx, 0.)), obstacles
     );

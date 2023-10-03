@@ -6,7 +6,7 @@ use rogalik_engine::Color;
 use std::collections::{HashMap, HashSet};
 
 use crate::creatures::{Creature, CreatureKind};
-use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT};
+use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT, MAMMOTH_BLOW_V_OFFSET};
 use crate::sprite::StaticSprite;
 
 #[derive(Default)]
@@ -35,20 +35,23 @@ pub fn generate_board(data: &str) -> (Board, Vec<Creature>)
     let mut colliders = Vec::new();
     
     for r in locations["rocks"].iter() {
-        let (sprite, aabb) = get_rock(*r, &locations["rocks"]);
+        let (sprite, aabb) = get_rock(r.0, &locations["rocks"].iter().map(|a| a.0).collect());
         sprites.push(sprite);
         colliders.push(aabb);
     }
     let mut gates = Vec::new();
     for (i, g) in locations["gates"].iter().enumerate() {
-        let (sprite, gate) = get_gate(g.as_f32(), i as u32);
+        let (sprite, gate) = get_gate(g.0.as_f32(), i as u32);
         sprites.push(sprite);
         gates.push(gate);
     }
 
     let mut creatures = Vec::new();
     for position in locations["birds"].iter() {
-        creatures.push(get_bird(position.as_f32()));
+        creatures.push(get_bird(position.0.as_f32(), position.1));
+    }
+    for position in locations["mammoths"].iter() {
+        creatures.push(get_mammoth(position.0.as_f32(), position.1));
     }
 
     (Board { sprites, colliders, gates }, creatures)
@@ -83,21 +86,40 @@ fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
     (sprite, gate)
 }
 
-fn get_bird(position: Vector2f) -> Creature {
+fn get_bird(position: Vector2f, flip: bool) -> Creature {
     Creature::new(
         CreatureKind::Bird,
         position,
         "creatures",
         0,
+        flip,
         Color(255, 255, 255, 255),
         Vector2f::new(TILE_SIZE, 0.5 * TILE_SIZE),
         Vector2f::new(0., 0.25 * TILE_SIZE),
     )
 }
 
-fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
+fn get_mammoth(position: Vector2f, flip: bool) -> Creature {
+    Creature::new(
+        CreatureKind::Mammoth,
+        position,
+        "creatures",
+        4,
+        flip,
+        Color(255, 255, 255, 255),
+        Vector2f::new(TILE_SIZE, TILE_SIZE),
+        if flip { 
+            Vector2f::new(-TILE_SIZE, TILE_SIZE * MAMMOTH_BLOW_V_OFFSET) 
+        } else { 
+            Vector2f::new(TILE_SIZE, TILE_SIZE * MAMMOTH_BLOW_V_OFFSET)
+        },
+    )
+}
+
+fn parse_str_data(data: &str) -> HashMap<&str, HashSet<(Vector2i, bool)>> {
     // the data should not have multibyte characters
     // so it's safe byte len = char len
+    // returns (position, flip)
     let lines = data.split('\n')
         .map(|s| match s.len() {
             a if a > BOARD_WIDTH as usize => s[..BOARD_WIDTH as usize].to_string(),
@@ -110,6 +132,7 @@ fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
         ("rocks", HashSet::new()),
         ("gates", HashSet::new()),
         ("birds", HashSet::new()),
+        ("mammoths", HashSet::new()),
     ]);
 
     for (row, line) in lines.iter().enumerate() {
@@ -117,9 +140,12 @@ fn parse_str_data(data: &str) -> HashMap<&str, HashSet<Vector2i>> {
         for (col, c) in line.chars().enumerate() {
             let v = Vector2i::new(col as i32, y as i32);
             match c {
-                '#' => { locations.get_mut("rocks").unwrap().insert(v); },
-                'G' => { locations.get_mut("gates").unwrap().insert(v); },
-                'B' => { locations.get_mut("birds").unwrap().insert(v); },
+                '#' => { locations.get_mut("rocks").unwrap().insert((v, false)); },
+                'G' => { locations.get_mut("gates").unwrap().insert((v, false)); },
+                'B' => { locations.get_mut("birds").unwrap().insert((v, false)); },
+                'b' => { locations.get_mut("birds").unwrap().insert((v, true)); },
+                'M' => { locations.get_mut("mammoths").unwrap().insert((v, false)); },
+                'm' => { locations.get_mut("mammoths").unwrap().insert((v, true)); },
                 _ => ()
             };
         }

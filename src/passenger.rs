@@ -25,6 +25,7 @@ pub enum PassengerState {
     Resigned
 }
 
+#[derive(PartialEq)]
 pub enum PassengerAnimationState {
     Idle,
     Walking,
@@ -123,7 +124,7 @@ pub fn handle_waiting(state: &mut State, delta: f32) {
     for passenger in state.passengers.iter_mut() {
         if let PassengerState::Waiting(ref mut time) = passenger.state {
             *time += delta;
-            if *time >= PASSENGER_MAX_WAIT {
+            if *time >= PASSENGER_MAX_WAIT && passenger.animation_state == PassengerAnimationState::Idle {
                 state.player.stats.take_reputation();
                 passenger.state = PassengerState::Resigned;
                 state.audio.play("resign");

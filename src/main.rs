@@ -173,6 +173,7 @@ fn game_over_loop(state: &mut State, context: &mut Context_) {
 fn load_assets(state: &mut State, context: &mut Context_) {
     state.level_data.insert("Tricity", include_str!("../assets/tricity.lvl"));
     state.level_data.insert("Birdy", include_str!("../assets/birdy.lvl"));
+    state.level_data.insert("Mammoth Hotel", include_str!("../assets/mammoths.lvl"));
 
     state.textures.insert(
         "ascii",
