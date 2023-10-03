@@ -6,7 +6,7 @@ use rogalik_engine::Color;
 use std::collections::{HashMap, HashSet};
 
 use crate::creatures::{Creature, CreatureKind};
-use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT, MAMMOTH_BLOW_V_OFFSET};
+use crate::globals::{TILE_SIZE, BOARD_WIDTH, BOARD_HEIGHT, MAMMOTH_BLOW_V_OFFSET, MAMMOTH_BLOW_V_SIZE};
 use crate::sprite::StaticSprite;
 
 #[derive(Default)]
@@ -107,7 +107,7 @@ fn get_mammoth(position: Vector2f, flip: bool) -> Creature {
         4,
         flip,
         Color(255, 255, 255, 255),
-        Vector2f::new(TILE_SIZE, TILE_SIZE),
+        Vector2f::new(TILE_SIZE, TILE_SIZE * MAMMOTH_BLOW_V_SIZE),
         if flip { 
             Vector2f::new(-TILE_SIZE, TILE_SIZE * MAMMOTH_BLOW_V_OFFSET) 
         } else { 
