@@ -81,13 +81,34 @@ fn render_status_bar(state: &State, context: &mut Context_) {
     offset += stamina_width + margin;
 
     // draw score
+    let score_text = format!("Score: {}", state.player.stats.score);
     context.graphics.draw_text(
         state.font,
-        &format!("Score: {}", state.player.stats.score),
+        &score_text,
         base + Vector2f::new(offset, 0.),
         height,
         Params2d { color: UI_BG, ..Default::default() }
     );
+    offset += margin + context.graphics.text_dimensions(state.font, &score_text, height).x;
+
+    // draw load status
+    if let Some(passenger) = &state.player.passenger {
+        context.graphics.draw_atlas_sprite(
+            state.textures["ascii"],
+            219,
+            base + Vector2f::new(offset, -0.5 * height),
+            Vector2f::new(3. * height, 2. * height),
+            Params2d { color: UI_BG, ..Default::default() }
+        );
+        render_centered_text(
+            base + Vector2f::new(offset + 1.5 * height, 0.),
+            &format!("{}", to_roman(passenger.target_gate + 1)),
+            height,
+            Color(0, 0, 0, 255),
+            state,
+            context
+        );
+    }
 }
 
 pub fn render_game_over(state: &State, context: &mut Context_) {
@@ -115,11 +136,6 @@ pub fn render_game_over(state: &State, context: &mut Context_) {
     );
 }
 
-fn text_width(t: &str, height: f32) -> f32 {
-    // assuming only single byte text
-    height * t.len() as f32
-}
-
 fn render_centered_text(
     v: Vector2f,
     t: &str,
@@ -128,10 +144,11 @@ fn render_centered_text(
     state: &State,
     context: &mut Context_
 ) {
+    let dim = context.graphics.text_dimensions(state.font, &t, height);
     context.graphics.draw_text(
         state.font,
         &t,
-        v - Vector2f::new(0.5 * text_width(&t, height), 0.),
+        v - Vector2f::new(0.5 * dim.x, 0.),
         height,
         Params2d { color, ..Default::default() }
     );
@@ -210,7 +227,7 @@ impl Button {
             Params2d { color: UI_BG, ..Default::default() }
         );
         render_centered_text(
-            self.origin + Vector2f::new(self.w / 2., 0.25* self.h),
+            self.origin + Vector2f::new(self.w / 2., 0.25 * self.h),
             &self.text,
             self.h / 2.,
             self.color,
