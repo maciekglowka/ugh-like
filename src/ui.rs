@@ -19,18 +19,18 @@ pub fn render_game_ui(state: &State, context: &mut Context_) {
 fn render_passenger_targets(state: &State, context: &mut Context_) {
     for passenger in state.passengers.iter() {
         if let PassengerState::Waiting(time) = passenger.state {
-            let color = if time > 0.5 * PASSENGER_MAX_WAIT {
-                UI_RED
+            let idx = if time > 0.5 * PASSENGER_MAX_WAIT {
+                2
             } else {
-                UI_BG
+                0
             };
             context.graphics.draw_atlas_sprite(
-                "ascii",
-                219,
+                "ui",
+                idx,
                 passenger.sprite.centre() + Vector2f::new(- 0.4 * TILE_SIZE, 0.8 * TILE_SIZE),
                 UI_BG_Z,
                 Vector2f::new(0.8 * TILE_SIZE, 0.5 * TILE_SIZE),
-                Params2d { color, ..Default::default() }
+                Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
             );
             let t = to_roman(passenger.target_gate + 1);
             let dx = 0.5 * t.len() as f32 * 0.25 * TILE_SIZE;
@@ -56,34 +56,35 @@ fn render_status_bar(state: &State, context: &mut Context_) {
 
     // draw reputation
 
-    for i in 0..state.player.stats.reputation {
+    for i in 0..crate::globals::BASE_REPUTATION {
+        let color = if i >= state.player.stats.reputation { UI_BG } else { UI_RED };
         context.graphics.draw_atlas_sprite(
             "ascii",
             3,
             base + Vector2f::new(offset + i as f32 * height, 0.),
             UI_Z,
             Vector2f::new(height, height),
-            Params2d { color: UI_RED, ..Default::default() }
+            Params2d { color, ..Default::default() }
         );
     }
     offset += BASE_REPUTATION as f32 * height + margin;
 
     // draw stamina bar
     context.graphics.draw_atlas_sprite(
-        "ascii",
-        219,
-        base + Vector2f::new(offset, 0.),
+        "ui",
+        0,
+        base + Vector2f::new(offset, -0.25 * height),
         UI_BG_Z,
-        Vector2f::new(stamina_width, height),
-        Params2d { color: UI_BG, ..Default::default() }
+        Vector2f::new(stamina_width, 1.5 * height),
+        Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
     );
     context.graphics.draw_atlas_sprite(
-        "ascii",
-        219,
-        base + Vector2f::new(offset, 0.),
+        "ui",
+        2,
+        base + Vector2f::new(offset, -0.25 * height),
         UI_Z,
-        Vector2f::new(state.player.stats.stamina * stamina_width, height),
-        Params2d { color: UI_RED, ..Default::default() }
+        Vector2f::new(state.player.stats.stamina * stamina_width, 1.5 * height),
+        Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
     );
     offset += stamina_width + margin;
 
@@ -102,12 +103,12 @@ fn render_status_bar(state: &State, context: &mut Context_) {
     // draw load status
     if let Some(passenger) = &state.player.passenger {
         context.graphics.draw_atlas_sprite(
-            "ascii",
-            219,
+            "ui",
+            0,
             base + Vector2f::new(offset, -0.5 * height),
             UI_BG_Z,
             Vector2f::new(3. * height, 2. * height),
-            Params2d { color: UI_BG, ..Default::default() }
+            Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
         );
         render_centered_text(
             base + Vector2f::new(offset + 1.5 * height, 0.),
@@ -230,12 +231,12 @@ impl Button {
     }
     pub fn draw(&self, state: &State, context: &mut Context_) {
         context.graphics.draw_atlas_sprite(
-            "ascii",
-            219,
+            "ui",
+            0,
             self.origin,
             UI_BG_Z,
             Vector2f::new(self.w, self.h),
-            Params2d { color: UI_BG, ..Default::default() }
+            Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
         );
         render_centered_text(
             self.origin + Vector2f::new(self.w / 2., 0.25 * self.h),

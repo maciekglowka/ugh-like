@@ -201,6 +201,13 @@ fn load_assets(state: &mut State, context: &mut Context_) {
         4,
         None
     );
+    context.graphics.load_sprite_atlas(
+        "ui",
+        include_bytes!("../assets/ui.png"),
+        4,
+        4,
+        None
+    );
 
     context.graphics.load_font(
         "default",

@@ -47,7 +47,8 @@ fn render_dynamic_sprite(
     context.graphics.draw_atlas_sprite(
         sprite.atlas,
         sprite.index + sprite.frame,
-        sprite.position,
+        // sprite.position,
+        pixel_perfect(sprite.position),
         sprite.z_index,
         sprite.size,
         Params2d { color: sprite.color, flip_x: sprite.flip_x, ..Default::default() }
@@ -82,4 +83,9 @@ fn render_gate_numbers(state: &State, context: &mut Context_) {
             Params2d { color: Color(64, 85, 89, 255), ..Default::default()}
         );
     }
+}
+
+fn pixel_perfect(v: Vector2f) -> Vector2f {
+    let scale = crate::globals::PIXEL_SCALE;
+    Vector2f::new((v.x * scale).round() / scale, (v.y * scale).round() / scale)
 }
