@@ -82,14 +82,16 @@ fn render_status_bar(state: &State, context: &mut Context_) {
         Vector2f::new(stamina_width, 1.5 * height),
         Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
     );
-    context.graphics.draw_atlas_sprite(
-        "ui",
-        2,
-        base + Vector2f::new(offset, -0.25 * height),
-        UI_Z,
-        Vector2f::new(state.player.stats.stamina * stamina_width, 1.5 * height),
-        Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
-    );
+    if state.player.stats.stamina * stamina_width > 8. / crate::globals::PIXEL_SCALE {
+        context.graphics.draw_atlas_sprite(
+            "ui",
+            2,
+            base + Vector2f::new(offset, -0.25 * height),
+            UI_Z,
+            Vector2f::new(state.player.stats.stamina * stamina_width, 1.5 * height),
+            Params2d { slice: Some((2, Vector2f::new(1., 1.))), ..Default::default() }
+        );
+    };
     offset += stamina_width + margin;
 
     // draw score
