@@ -38,8 +38,6 @@ pub struct State {
     level_data: HashMap<&'static str, &'static str>,
     board: board::Board,
     animation_timer: ResourceId,
-    textures: HashMap<&'static str, ResourceId>,
-    font: ResourceId,
     player: player::Player,
     passengers: Vec<passenger::Passenger>,
     creatures: Vec<creatures::Creature>,
@@ -175,35 +173,41 @@ fn load_assets(state: &mut State, context: &mut Context_) {
     state.level_data.insert("Birdy", include_str!("../assets/birdy.lvl"));
     state.level_data.insert("Mammoth Hotel", include_str!("../assets/mammoths.lvl"));
 
-    state.textures.insert(
+    context.graphics.load_sprite_atlas(
         "ascii",
-        context.graphics.load_sprite_atlas(
-            include_bytes!("../assets/ascii.png"), 16, 16
-        )
-    );
-    state.textures.insert(
-        "tiles",
-        context.graphics.load_sprite_atlas(
-            include_bytes!("../assets/tiles.png"), 4, 4
-        )
-    );
-    state.textures.insert(
-        "actors",
-        context.graphics.load_sprite_atlas(
-            include_bytes!("../assets/actors.png"), 4, 4
-        )
-    );
-    state.textures.insert(
-        "creatures",
-        context.graphics.load_sprite_atlas(
-            include_bytes!("../assets/creatures.png"), 4, 4
-        )
-    );
-
-    state.font = context.graphics.load_font(
         include_bytes!("../assets/ascii.png"),
         16,
-        16
+        16,
+        None
+    );
+    context.graphics.load_sprite_atlas(
+        "tiles",
+        include_bytes!("../assets/tiles.png"),
+        4,
+        4,
+        None
+    );
+    context.graphics.load_sprite_atlas(
+        "actors",
+        include_bytes!("../assets/actors.png"),
+        4,
+        4,
+        None
+    );
+    context.graphics.load_sprite_atlas(
+        "creatures",
+        include_bytes!("../assets/creatures.png"),
+        4,
+        4,
+        None
+    );
+
+    context.graphics.load_font(
+        "default",
+        include_bytes!("../assets/ascii.png"),
+        16,
+        16,
+        None
     );
 
     state.audio = audio::get_audio_context();
@@ -227,6 +231,7 @@ fn reinit(state: &mut State, context: &mut Context_) {
     // reinitialize the game state for a fresh game or restart
     state.player = player::Player::new(
         Vector2f::new((globals::BOARD_WIDTH / 2) as f32, 2.),
+        crate::globals::PLAYER_Z,
         "actors",
         0,
         Color(255, 255, 255, 255),

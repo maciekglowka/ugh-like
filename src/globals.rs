@@ -5,6 +5,14 @@ pub const PASSENGER_WIDTH: f32 = 0.5;
 pub const BOARD_WIDTH: u32 = 16;
 pub const BOARD_HEIGHT: u32 = 10;
 
+pub const BACKGROUND_Z: i32 = -10;
+pub const TILE_Z: i32 = 0;
+pub const PASSENGER_Z: i32 = 10;
+pub const PLAYER_Z: i32 = 15;
+pub const CREATURE_Z: i32 = 17;
+pub const UI_BG_Z: i32 = 20;
+pub const UI_Z: i32 = 25;
+
 pub const BASE_REPUTATION: u32 = 5;
 pub const BASE_STAMINA_USE: f32 = 0.1;
 pub const BASE_STAMINA_RECOVERY: f32 = 0.04;

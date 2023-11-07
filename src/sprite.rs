@@ -13,6 +13,7 @@ pub struct DynamicSprite {
     pub color: Color,
     pub frame: usize,
     pub position: Vector2f,
+    pub z_index: i32,
     pub collider_size: Vector2f,
     pub collider_offset: Vector2f,
     pub size: Vector2f,
@@ -21,6 +22,7 @@ pub struct DynamicSprite {
 impl DynamicSprite {
     pub fn new(
         position: Vector2f,
+        z_index: i32,
         atlas: &'static str,
         index: usize,
         color: Color,
@@ -31,6 +33,7 @@ impl DynamicSprite {
             atlas,
             index,
             position,
+            z_index,
             color,
             frame: 0,
             size: Vector2f::new(TILE_SIZE, TILE_SIZE),
@@ -58,5 +61,6 @@ pub struct StaticSprite {
     pub index: usize,
     pub color: Color,
     pub position: Vector2f,
+    pub z_index: i32,
     pub size: Vector2f
 }

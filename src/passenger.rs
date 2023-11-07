@@ -42,6 +42,7 @@ pub struct Passenger {
 impl Passenger {
     pub fn new(
         position: Vector2f,
+        z_index: i32,
         atlas: &'static str,
         sprite_index: usize,
         color: Color,
@@ -51,6 +52,7 @@ impl Passenger {
     ) -> Self {
         let sprite = DynamicSprite::new(
             position,
+            z_index,
             atlas,
             sprite_index,
             color,
@@ -95,6 +97,7 @@ pub fn try_spawn(state: &mut State) {
 
     let passenger = Passenger::new(
         gate_position + Vector2f::new(0.5 * TILE_SIZE, 0.),
+        crate::globals::PASSENGER_Z,
         "actors",
         4,
         Color(255, 255, 255, 255),

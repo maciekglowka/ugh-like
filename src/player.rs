@@ -41,6 +41,7 @@ pub struct Player {
 impl Player {
     pub fn new(
         position: Vector2f,
+        z_index: i32,
         atlas: &'static str,
         sprite_index: usize,
         color: Color,
@@ -48,6 +49,7 @@ impl Player {
     ) -> Self {
         let sprite = DynamicSprite::new(
             position,
+            z_index,
             atlas,
             sprite_index,
             color,
@@ -120,7 +122,7 @@ fn move_y(player: &mut Player, obstacles: &Vec<Aabb>, delta: f32) -> bool {
         damage = true;
     }
 
-    let y = if dy < 0. {
+    let y = if dy < TOLERANCE {
         player.grounded = true;
         colliders.iter()
             .map(|a| a.b.y).fold(f32::NEG_INFINITY, |a, b| a.max(b))

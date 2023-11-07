@@ -2,7 +2,9 @@ use rogalik_engine::{Color, GraphicsContext, Params2d, ResourceId};
 use rogalik_math::vectors::Vector2f;
 
 use super::{Context_, State};
-use crate::globals::{TILE_SIZE, PIXEL_SCALE, BASE_REPUTATION, PASSENGER_MAX_WAIT};
+use crate::globals::{
+    TILE_SIZE, PIXEL_SCALE, BASE_REPUTATION, PASSENGER_MAX_WAIT, UI_Z, UI_BG_Z
+};
 use crate::passenger::PassengerState;
 use crate::utils::to_roman;
 
@@ -23,18 +25,20 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
                 UI_BG
             };
             context.graphics.draw_atlas_sprite(
-                state.textures["ascii"],
+                "ascii",
                 219,
                 passenger.sprite.centre() + Vector2f::new(- 0.4 * TILE_SIZE, 0.8 * TILE_SIZE),
+                UI_BG_Z,
                 Vector2f::new(0.8 * TILE_SIZE, 0.5 * TILE_SIZE),
                 Params2d { color, ..Default::default() }
             );
             let t = to_roman(passenger.target_gate + 1);
             let dx = 0.5 * t.len() as f32 * 0.25 * TILE_SIZE;
             context.graphics.draw_text(
-                state.font,
+                "default",
                 t,
                 passenger.sprite.centre() + Vector2f::new(-dx, 0.9 * TILE_SIZE),
+                UI_Z,
                 0.25 * TILE_SIZE,
                 Params2d { color: Color(0, 0, 0, 255), ..Default::default() }
             );
@@ -54,9 +58,10 @@ fn render_status_bar(state: &State, context: &mut Context_) {
 
     for i in 0..state.player.stats.reputation {
         context.graphics.draw_atlas_sprite(
-            state.textures["ascii"],
+            "ascii",
             3,
             base + Vector2f::new(offset + i as f32 * height, 0.),
+            UI_Z,
             Vector2f::new(height, height),
             Params2d { color: UI_RED, ..Default::default() }
         );
@@ -65,16 +70,18 @@ fn render_status_bar(state: &State, context: &mut Context_) {
 
     // draw stamina bar
     context.graphics.draw_atlas_sprite(
-        state.textures["ascii"],
+        "ascii",
         219,
         base + Vector2f::new(offset, 0.),
+        UI_BG_Z,
         Vector2f::new(stamina_width, height),
         Params2d { color: UI_BG, ..Default::default() }
     );
     context.graphics.draw_atlas_sprite(
-        state.textures["ascii"],
+        "ascii",
         219,
         base + Vector2f::new(offset, 0.),
+        UI_Z,
         Vector2f::new(state.player.stats.stamina * stamina_width, height),
         Params2d { color: UI_RED, ..Default::default() }
     );
@@ -83,20 +90,22 @@ fn render_status_bar(state: &State, context: &mut Context_) {
     // draw score
     let score_text = format!("Score: {}", state.player.stats.score);
     context.graphics.draw_text(
-        state.font,
+        "default",
         &score_text,
         base + Vector2f::new(offset, 0.),
+        UI_Z,
         height,
         Params2d { color: UI_BG, ..Default::default() }
     );
-    offset += margin + context.graphics.text_dimensions(state.font, &score_text, height).x;
+    offset += margin + context.graphics.text_dimensions("default", &score_text, height).x;
 
     // draw load status
     if let Some(passenger) = &state.player.passenger {
         context.graphics.draw_atlas_sprite(
-            state.textures["ascii"],
+            "ascii",
             219,
             base + Vector2f::new(offset, -0.5 * height),
+            UI_BG_Z,
             Vector2f::new(3. * height, 2. * height),
             Params2d { color: UI_BG, ..Default::default() }
         );
@@ -144,11 +153,12 @@ fn render_centered_text(
     state: &State,
     context: &mut Context_
 ) {
-    let dim = context.graphics.text_dimensions(state.font, &t, height);
+    let dim = context.graphics.text_dimensions("default", &t, height);
     context.graphics.draw_text(
-        state.font,
+        "default",
         &t,
         v - Vector2f::new(0.5 * dim.x, 0.),
+        UI_Z,
         height,
         Params2d { color, ..Default::default() }
     );
@@ -220,9 +230,10 @@ impl Button {
     }
     pub fn draw(&self, state: &State, context: &mut Context_) {
         context.graphics.draw_atlas_sprite(
-            state.textures["ascii"],
+            "ascii",
             219,
             self.origin,
+            UI_BG_Z,
             Vector2f::new(self.w, self.h),
             Params2d { color: UI_BG, ..Default::default() }
         );

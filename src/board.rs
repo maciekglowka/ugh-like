@@ -68,7 +68,8 @@ fn get_rock(v: Vector2i, other: &HashSet<Vector2i>) -> (StaticSprite, Aabb) {
         index: offset,
         color: Color(255, 255, 255, 255),
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
-        position
+        position,
+        z_index: crate::globals::TILE_Z
     };
     let aabb = Aabb::new(position, position + Vector2f::new(TILE_SIZE, TILE_SIZE));
     (sprite, aabb)
@@ -80,7 +81,8 @@ fn get_gate(position: Vector2f, number: u32) -> (StaticSprite, Gate) {
         index: 4,
         color: Color(255, 255, 255, 255),
         size: Vector2f::new(TILE_SIZE, TILE_SIZE),
-        position
+        position,
+        z_index: crate::globals::TILE_Z
     };
     let gate = Gate { position, has_passenger: false, since_pickup: 0. };
     (sprite, gate)
@@ -90,6 +92,7 @@ fn get_bird(position: Vector2f, flip: bool) -> Creature {
     Creature::new(
         CreatureKind::Bird,
         position,
+        crate::globals::CREATURE_Z,
         "creatures",
         0,
         flip,
@@ -103,6 +106,7 @@ fn get_mammoth(position: Vector2f, flip: bool) -> Creature {
     Creature::new(
         CreatureKind::Mammoth,
         position,
+        crate::globals::CREATURE_Z,
         "creatures",
         4,
         flip,

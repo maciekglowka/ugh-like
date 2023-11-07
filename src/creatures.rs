@@ -27,6 +27,7 @@ impl Creature {
     pub fn new(
         kind: CreatureKind,
         position: Vector2f,
+        z_index: i32,
         atlas: &'static str,
         sprite_index: usize,
         flip: bool,
@@ -36,6 +37,7 @@ impl Creature {
     ) -> Self {
         let mut sprite = DynamicSprite::new(
             position,
+            z_index,
             atlas,
             sprite_index,
             color,
