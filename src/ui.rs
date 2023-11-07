@@ -6,7 +6,7 @@ use crate::globals::{
     TILE_SIZE, PIXEL_SCALE, BASE_REPUTATION, PASSENGER_MAX_WAIT, UI_Z, UI_BG_Z
 };
 use crate::passenger::PassengerState;
-use crate::utils::to_roman;
+use crate::utils::{to_roman, pixel_perfect};
 
 const UI_BG: Color = Color(85, 113, 119, 255);
 const UI_RED: Color = Color(152, 77, 77, 255);
@@ -27,7 +27,9 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
             context.graphics.draw_atlas_sprite(
                 "ui",
                 idx,
-                passenger.sprite.centre() + Vector2f::new(- 0.4 * TILE_SIZE, 0.8 * TILE_SIZE),
+                pixel_perfect(
+                    passenger.sprite.centre() + Vector2f::new(- 0.4 * TILE_SIZE, 0.8 * TILE_SIZE)
+                ),
                 UI_BG_Z,
                 Vector2f::new(0.8 * TILE_SIZE, 0.5 * TILE_SIZE),
                 Params2d { slice: Some((4, Vector2f::new(1., 1.))), ..Default::default() }
@@ -37,7 +39,9 @@ fn render_passenger_targets(state: &State, context: &mut Context_) {
             context.graphics.draw_text(
                 "default",
                 t,
-                passenger.sprite.centre() + Vector2f::new(-dx, 0.9 * TILE_SIZE),
+                pixel_perfect(
+                    passenger.sprite.centre() + Vector2f::new(-dx, 0.9 * TILE_SIZE)
+                ),
                 UI_Z,
                 0.25 * TILE_SIZE,
                 Params2d { color: Color(0, 0, 0, 255), ..Default::default() }

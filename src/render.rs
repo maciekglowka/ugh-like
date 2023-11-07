@@ -6,7 +6,7 @@ use crate::globals::{
     TILE_SIZE, BOARD_HEIGHT, BOARD_WIDTH, BACKGROUND_Z, UI_Z
 };
 use crate::sprite::{DynamicSprite, StaticSprite};
-use crate::utils::to_roman;
+use crate::utils::{pixel_perfect, to_roman};
 
 pub fn render_sprites(state: &State, context: &mut Context_) {
     render_background(state, context);
@@ -83,9 +83,4 @@ fn render_gate_numbers(state: &State, context: &mut Context_) {
             Params2d { color: Color(64, 85, 89, 255), ..Default::default()}
         );
     }
-}
-
-fn pixel_perfect(v: Vector2f) -> Vector2f {
-    let scale = crate::globals::PIXEL_SCALE;
-    Vector2f::new((v.x * scale).round() / scale, (v.y * scale).round() / scale)
 }
